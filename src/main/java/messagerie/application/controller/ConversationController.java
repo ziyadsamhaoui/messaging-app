@@ -22,7 +22,7 @@ public class ConversationController {
 
     @GetMapping
     public ResponseEntity<ConversationPageDTO> getConversations(
-            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int limit) {
 
         // Manually enforce bounds for limit to avoid relying on validation annotations that may not be present.

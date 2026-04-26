@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import java.time.format.DateTimeParseException;
+import messagerie.application.dto.MessagePageDTO;
 
 @Service
 public class MessageService {
@@ -61,31 +61,45 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    public List<MessageDTO> getMessages(Long conversationId, String cursor, int limit) {
-        Pageable pageable = PageRequest.of(0, Math.max(1, limit));
+    /**
+     * Returns a page of messages for a conversation using ID-based cursor pagination.
+     * Cursor is expected to be a messageId (as Long). If cursor is null, returns the latest messages.
+     * The messages are returned in descending order (newest first). The returned MessagePageDTO contains
+     * a nextCursor which is the messageId of the last item in the returned page and should be used
+     * to fetch the next page (older messages) by passing it as the cursor parameter.
+     */
+    public MessagePageDTO getMessages(Long conversationId, Long cursor, int limit) {
+        int pageSize = Math.max(1, limit);
+        int fetchSize = pageSize + 1; // fetch one extra item to determine whether another page exists
+
+        Pageable pageable = PageRequest.of(0, fetchSize);
         List<MessageEntity> entities;
 
         if (cursor == null) {
-            entities = messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, pageable);
+            // no cursor => get latest messages ordered by id desc
+            entities = messageRepository.findByConversationIdOrderByMessageIdDesc(conversationId, pageable);
         } else {
-            // try parse cursor as ISO date-time, fallback to epoch millis
-            try {
-                LocalDateTime cursorDate = LocalDateTime.parse(cursor);
-                entities = messageRepository.findByConversationIdAndCreatedAtLessThanOrderByCreatedAtDesc(conversationId, cursorDate, pageable);
-            } catch (DateTimeParseException ex) {
-                try {
-                    long epoch = Long.parseLong(cursor);
-                    LocalDateTime cursorDate = LocalDateTime.ofEpochSecond(epoch/1000, 0, java.time.ZoneOffset.UTC);
-                    entities = messageRepository.findByConversationIdAndCreatedAtLessThanOrderByCreatedAtDesc(conversationId, cursorDate, pageable);
-                } catch (Exception e) {
-                    // fallback to latest
-                    entities = messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, pageable);
-                }
-            }
+            // get messages with id less than cursor id => older messages
+            entities = messageRepository.findByConversationIdAndMessageIdLessThanOrderByMessageIdDesc(conversationId, cursor, pageable);
         }
 
-        return entities.stream()
+        List<MessageDTO> dtoList = entities.stream()
                 .map(e -> new MessageDTO(e.getMessageId(), e.getConversationId(), e.getUserId(), e.getContent(), e.getCreatedAt()))
                 .collect(Collectors.toList());
+
+        // Keep only the requested page size and compute nextCursor using limit+1 strategy.
+        boolean hasMore = dtoList.size() > pageSize;
+        if (hasMore) {
+            dtoList = dtoList.subList(0, pageSize);
+        }
+
+        // compute nextCursor: if hasMore, it is the id of the last returned item.
+        Long nextCursor = null;
+        if (hasMore && !dtoList.isEmpty()) {
+            MessageDTO last = dtoList.get(dtoList.size() - 1);
+            nextCursor = last.getMessageId();
+        }
+
+        return new MessagePageDTO(dtoList, nextCursor);
     }
 }

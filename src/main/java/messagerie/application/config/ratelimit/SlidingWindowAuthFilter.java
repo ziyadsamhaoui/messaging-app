@@ -16,14 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Sliding-window rate limiter for authentication endpoints (login/register).
- *
- * Implementation notes:
- * - We use the remote IP as the main key. If a username parameter is available as a query/form param
- *   it will be used as well (to limit per-account attempts). Parsing JSON bodies is fragile here because
- *   reading the InputStream would interfere with downstream authentication; therefore we avoid it.
- */
+
 public class SlidingWindowAuthFilter extends OncePerRequestFilter {
 
     // keep a deque of attempt timestamps (milliseconds) per key

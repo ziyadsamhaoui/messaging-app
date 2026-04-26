@@ -12,7 +12,8 @@ import java.util.List;
 public class ConversationPageDTO {
     private List<ConversationDTO> items;
 
-    // nextCursor is the conversationId (as String) of the last item in the current page.
-    private String nextCursor;
+    // nextCursor is the conversationId of the last item in the current page.
+    // Clients should pass this value (numeric) as the `cursor` parameter to fetch older items.
+    private Long nextCursor;
 }
 

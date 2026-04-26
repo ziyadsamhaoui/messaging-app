@@ -2,7 +2,7 @@ package messagerie.application.config.ratelimit;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,28 +13,27 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.Refill;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 /**
  * Rate limit filter using a token-bucket per key. Key is the authenticated username when available,
- * otherwise the remote IP address. Buckets are stored in a Caffeine cache to avoid unbounded growth.
+ * otherwise the remote IP address. Bucket state is stored in Redis using Bucket4j ProxyManager.
  */
 public class TokenBucketFilter extends OncePerRequestFilter {
 
-    // Simple in-memory cache for buckets. For production use a distributed store (Redis) or
-    // Bucket4j extensions that provide Redis-backed buckets.
-    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    private final ProxyManager<byte[]> proxyManager;
 
-    private Bucket newBucket() {
-        // allow 10 tokens per second with a burst capacity of 20
-        Bandwidth limit = Bandwidth.classic(10, Refill.greedy(20, Duration.ofSeconds(1)));
-        return Bucket4j.builder().addLimit(limit).build();
+    // Token bucket parameters: allow 10 tokens per second, burst capacity 20.
+    private final BucketConfiguration bucketConfiguration = BucketConfiguration.builder()
+            .addLimit(Bandwidth.classic(20, Refill.greedy(10, Duration.ofSeconds(1))))
+            .build();
+
+    public TokenBucketFilter(ProxyManager<byte[]> proxyManager) {
+        this.proxyManager = proxyManager;
     }
 
     @Override
@@ -43,7 +42,9 @@ public class TokenBucketFilter extends OncePerRequestFilter {
 
         String key = resolveKey(request);
 
-        Bucket bucket = cache.computeIfAbsent(key, k -> newBucket());
+        // A deterministic Redis key per user/ip; proxy bucket state is shared across app instances.
+        byte[] redisKey = ("rate-limit:" + key).getBytes(StandardCharsets.UTF_8);
+        Bucket bucket = proxyManager.builder().build(redisKey, () -> bucketConfiguration);
 
         boolean consumed = bucket.tryConsume(1);
         if (!consumed) {

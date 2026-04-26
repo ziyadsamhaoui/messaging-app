@@ -182,9 +182,9 @@ public class ConversationService {
         return conversation;
     }
 
-    public ConversationPageDTO getConversations(String cursor, int limit) {
-        // Use id-based cursor pagination. The cursor is expected to be the last-seen conversationId (as String).
-        // We fetch conversations with conversationId < cursorId ordered by conversationId desc.
+    public ConversationPageDTO getConversations(Long cursor, int limit) {
+        // Use id-based cursor pagination. The cursor is expected to be the last-seen conversationId (as Long).
+        // We fetch conversations with conversationId < cursor ordered by conversationId desc.
         // To determine if there's a next page, we fetch limit+1 items and, if present, return a nextCursor.
 
         int pageSize = Math.max(1, limit);
@@ -193,17 +193,11 @@ public class ConversationService {
         var pageable = org.springframework.data.domain.PageRequest.of(0, fetchSize, org.springframework.data.domain.Sort.by("conversationId").descending());
         java.util.List<ConversationEntity> entities;
 
-        if (cursor == null || cursor.isBlank()) {
+        if (cursor == null) {
             // No cursor -> return the first page (latest conversations)
             entities = conversationRepository.findAll(pageable).getContent();
         } else {
-            try {
-                Long cursorId = Long.parseLong(cursor);
-                entities = conversationRepository.findByConversationIdLessThanOrderByConversationIdDesc(cursorId, pageable);
-            } catch (NumberFormatException ex) {
-                // If cursor is invalid (not a number), fall back to the first page
-                entities = conversationRepository.findAll(pageable).getContent();
-            }
+            entities = conversationRepository.findByConversationIdLessThanOrderByConversationIdDesc(cursor, pageable);
         }
 
         // Determine if we have more results than pageSize
@@ -228,10 +222,10 @@ public class ConversationService {
         }).toList();
 
         // nextCursor is the id of the last item in this page (so clients can pass it to get older items).
-        String nextCursor = null;
+        Long nextCursor = null;
         if (hasMore && !pageItems.isEmpty()) {
             Long lastId = pageItems.get(pageItems.size() - 1).getConversationId();
-            nextCursor = String.valueOf(lastId);
+            nextCursor = lastId;
         }
 
         return new ConversationPageDTO(dtoList, nextCursor);

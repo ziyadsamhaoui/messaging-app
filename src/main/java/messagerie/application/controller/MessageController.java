@@ -1,11 +1,10 @@
 package messagerie.application.controller;
 
-import messagerie.application.dto.MessageDTO;
+import messagerie.application.dto.MessagePageDTO;
 import messagerie.application.service.MessageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/conversations/{conversationId}/messages")
@@ -18,11 +17,11 @@ public class MessageController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MessageDTO>> getMessages(
+    public ResponseEntity<MessagePageDTO> getMessages(
             @PathVariable Long conversationId,
-            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int limit) {
-        List<MessageDTO> messages = messageService.getMessages(conversationId, cursor, limit);
-        return ResponseEntity.ok(messages);
+        MessagePageDTO page = messageService.getMessages(conversationId, cursor, limit);
+        return ResponseEntity.ok(page);
     }
 }
