@@ -2,13 +2,18 @@ package messagerie.application.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name="messages")
-@Getter
-@Setter
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class MessageEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +28,8 @@ public class MessageEntity {
     private boolean edited;
     private boolean deleted;
 
-    public MessageEntity() {}
+    // Full-args constructor used by some parts of the codebase/tests
+    // (replaced by Lombok @AllArgsConstructor but kept convenience constructors below)
 
     public MessageEntity(Long conversationId, Long userId, String content) {
         this.conversationId = conversationId;
@@ -33,6 +39,7 @@ public class MessageEntity {
         this.edited = false;
         this.deleted = false;
     }
+
 
     public void editMessage(String newContent) {
         if (deleted) {
@@ -46,4 +53,3 @@ public class MessageEntity {
         this.deleted = true;
     }
 }
-

@@ -4,6 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
 
@@ -13,7 +16,7 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     @Query("""
         SELECT c
         FROM ConversationEntity c
-        WHERE c.type = messagerie.application.controller.ConversationType.PRIVATE
+        WHERE c.type = messagerie.application.enums.ConversationType.PRIVATE
         AND EXISTS (
             SELECT 1
             FROM ConversationParticipantEntity p
@@ -38,4 +41,8 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     );
 
     Optional<ConversationEntity> findByConversationId(Long conversationId);
+
+
+    // Find conversations with id less than the given cursor id, ordered desc (id-based cursor pagination)
+    List<ConversationEntity> findByConversationIdLessThanOrderByConversationIdDesc(Long conversationId, Pageable pageable);
 }

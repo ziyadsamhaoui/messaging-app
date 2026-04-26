@@ -1,8 +1,6 @@
 package messagerie.application.dto;
 
-import messagerie.application.enums.ConversationType;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,10 +8,12 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConversationDTO {
+public class ChatMessage {
+    private Long messageId;
     private Long conversationId;
-    private ConversationType type;
-    private String name;
+    private Long senderId;
+    private String senderUsername;
+    private String targetUsername; // optional, used to create/find private conversations
+    private String content;
     private LocalDateTime createdAt;
-    private List<UserDTO> participants;
 }

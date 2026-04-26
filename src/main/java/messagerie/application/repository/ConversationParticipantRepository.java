@@ -9,9 +9,9 @@ import java.util.Optional;
 @Repository
 public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipantEntity, Long> {
 
-    Optional<ConversationParticipantEntity> findByConversation_ConversationIdAndUserId(Long conversationId, Long userId);
-
     List<ConversationParticipantEntity> findByUserId(Long userId);
+
+    List<ConversationParticipantEntity> findByConversationId(Long conversationId);
 
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
 }

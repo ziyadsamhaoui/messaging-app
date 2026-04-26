@@ -1,8 +1,9 @@
 package messagerie.application.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import messagerie.application.enums.GroupRole;
 
 import java.time.LocalDateTime;
@@ -12,8 +13,9 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"conversationId", "userId"})
         })
-@Setter
-@Getter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConversationParticipantEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,8 +27,6 @@ public class ConversationParticipantEntity {
     private GroupRole role;
     private LocalDateTime joinedAt;
     private Long lastReadMessageId;
-
-    public ConversationParticipantEntity() {}
 
     public ConversationParticipantEntity(Long conversationId, Long userId, GroupRole role) {
         this.conversationId = conversationId;
