@@ -1,4 +1,4 @@
-package messagerie.application.controller;
+package messagerie.application.auth;
 
 import messagerie.application.config.JwtService;
 import messagerie.application.config.JwtRevocationService;

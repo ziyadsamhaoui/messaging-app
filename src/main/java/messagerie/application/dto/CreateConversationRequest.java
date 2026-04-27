@@ -12,7 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateConversationRequest {
     private ConversationType type; // PRIVATE or GROUP
-    private Long creatorId;
 
     // private conversation
     private String targetUsername;
