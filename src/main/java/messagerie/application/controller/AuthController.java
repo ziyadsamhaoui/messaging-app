@@ -1,6 +1,9 @@
 package messagerie.application.controller;
 
 import messagerie.application.config.JwtService;
+import messagerie.application.config.JwtRevocationService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import messagerie.application.dto.AuthResponse;
 import messagerie.application.dto.LoginRequest;
 import messagerie.application.dto.RegisterRequest;
@@ -25,13 +28,15 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final JwtRevocationService jwtRevocationService;
 
     @Autowired
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager, JwtRevocationService jwtRevocationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.jwtRevocationService = jwtRevocationService;
     }
 
     @PostMapping("/register")
@@ -62,6 +67,26 @@ public class AuthController {
         UserEntity user = userRepository.findByUsername(req.getUsername()).get();
         String token = jwtService.generateToken(user.getUsername(), user.getUserId());
         return ResponseEntity.ok(new AuthResponse(token, user.getUserId(), user.getUsername()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(name = "Authorization", required = false) String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body("Missing Authorization header");
+        }
+        String token = authHeader.substring(7);
+        try {
+            Jws<Claims> parsed = jwtService.parseToken(token);
+            Claims claims = parsed.getBody();
+            String jti = claims.getId();
+            if (jti != null) {
+                long ttl = (claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000L;
+                if (ttl > 0) jwtRevocationService.revoke(jti, ttl);
+            }
+            return ResponseEntity.ok().build();
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
     }
 }
 

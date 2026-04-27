@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>messagerie</groupId>
-    <artifactId>ApplicationMessagerie</artifactId>
+    <artifactId>MessagingApp</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ApplicationMessagerie</name>
     <description>ApplicationMessagerie</description>
@@ -104,7 +104,7 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- Rate limiting dependencies: Bucket4j + Redis-backed distributed storage -->
+
         <dependency>
             <groupId>com.bucket4j</groupId>
             <artifactId>bucket4j-core</artifactId>
@@ -120,7 +120,7 @@
             <artifactId>caffeine</artifactId>
             <version>3.1.6</version>
         </dependency>
-        <!-- JWT (JJWT) -->
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>

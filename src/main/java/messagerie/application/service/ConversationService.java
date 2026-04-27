@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
+import org.springframework.dao.DataIntegrityViolationException;
 import messagerie.application.dto.ConversationPageDTO;
 
 
@@ -74,7 +75,21 @@ public class ConversationService {
         conversation.setName(name);
         conversation.setCreatedAt(LocalDateTime.now());
 
-        conversation = conversationRepository.save(conversation);
+        // set a deterministic privateKey for uniqueness (sorted user ids) to avoid race creating duplicates
+        long a = Math.min(creatorId, targetId);
+        long b = Math.max(creatorId, targetId);
+        conversation.setPrivateKey(a + ":" + b);
+
+        try {
+            conversation = conversationRepository.save(conversation);
+        } catch (DataIntegrityViolationException ex) {
+            // Another concurrent request likely created the private conversation. Try to find it and return existing.
+            var existing = conversationRepository.findPrivateConversation(creatorId, targetId);
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+            throw ex;
+        }
 
         // create participant for creator
         ConversationParticipantEntity creatorParticipant = new ConversationParticipantEntity();

@@ -15,6 +15,13 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.Refill;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
@@ -23,15 +30,21 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
     private final ConversationParticipantRepository participantRepository;
+    private final ProxyManager<byte[]> bucketProxyManager;
+    private final BucketConfiguration bucketConfiguration = BucketConfiguration.builder()
+            .addLimit(Bandwidth.classic(20, Refill.greedy(10, Duration.ofSeconds(1))))
+            .build();
 
     public StompAuthChannelInterceptor(JwtService jwtService,
                                        CustomUserDetailsService customUserDetailsService,
                                        UserRepository userRepository,
-                                       ConversationParticipantRepository participantRepository) {
+                                       ConversationParticipantRepository participantRepository,
+                                       ProxyManager<byte[]> bucketProxyManager) {
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
+        this.bucketProxyManager = bucketProxyManager;
     }
 
     @Override
@@ -97,6 +110,22 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         if (destination != null && destination.startsWith("/app/")) {
             // For app destinations, authenticated principal is mandatory.
             // Fine-grained checks by conversation id happen at service/controller level.
+            // Apply per-user websocket rate limiter for messages sent to application destinations
+            try {
+                String username = accessor.getUser().getName();
+                String key = "ws:rate:user:" + (username == null ? "anonymous" : username);
+                byte[] redisKey = key.getBytes(StandardCharsets.UTF_8);
+                Bucket bucket = bucketProxyManager.builder().build(redisKey, () -> bucketConfiguration);
+                boolean consumed = bucket.tryConsume(1);
+                if (!consumed) {
+                    throw new AccessDeniedException("WebSocket rate limit exceeded");
+                }
+            } catch (AccessDeniedException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                // In case of any failure talking to Redis or bucket manager, deny to be safe
+                throw new AccessDeniedException("WebSocket rate limiting failed");
+            }
             return;
         }
     }

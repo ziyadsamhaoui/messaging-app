@@ -23,6 +23,8 @@ public class ConversationEntity {
     private ConversationType type;
 
     private String name;
+    @Column(unique = true)
+    private String privateKey;
 
     private LocalDateTime createdAt;
 
