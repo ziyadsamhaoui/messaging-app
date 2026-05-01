@@ -2,6 +2,8 @@ package messagerie.application.config.ratelimit;
 
 import java.io.IOException;
 import java.time.Instant;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import messagerie.application.dto.ErrorResponse;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +56,15 @@ public class SlidingWindowAuthFilter extends OncePerRequestFilter {
         if (blocked) {
             response.setStatus(429);
             response.setHeader("Retry-After", "60");
-            response.getWriter().write("Too many authentication attempts, try again later");
+            response.setContentType("application/json");
+            ErrorResponse er = new ErrorResponse();
+            er.setTimestamp(Instant.now());
+            er.setStatus(429);
+            er.setError("Too Many Requests");
+            er.setMessage("Too many authentication attempts, try again later");
+            er.setPath(request.getRequestURI());
+            ObjectMapper om = new ObjectMapper();
+            om.writeValue(response.getWriter(), er);
             return;
         }
 

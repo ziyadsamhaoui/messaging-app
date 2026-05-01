@@ -119,12 +119,6 @@ public class ConversationService {
     }
 
 
-    @Transactional
-    public ConversationEntity createGroupConversation(Long creatorId, List<String> participantUsernames) {
-        // preserve old behavior without a group name
-        return createGroupConversation(creatorId, participantUsernames, null);
-    }
-
 
     @Transactional
     public ConversationEntity createGroupConversation(Long creatorId, List<String> participantUsernames, String name) {

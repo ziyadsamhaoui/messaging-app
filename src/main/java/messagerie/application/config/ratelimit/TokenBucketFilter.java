@@ -3,6 +3,8 @@ package messagerie.application.config.ratelimit;
 import java.io.IOException;
 import java.time.Duration;
 import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import messagerie.application.dto.ErrorResponse;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,7 +53,15 @@ public class TokenBucketFilter extends OncePerRequestFilter {
             // Too many requests
             response.setStatus(429);
             response.setHeader("Retry-After", "1");
-            response.getWriter().write("Too Many Requests");
+            response.setContentType("application/json");
+            ErrorResponse er = new ErrorResponse();
+            er.setTimestamp(java.time.Instant.now());
+            er.setStatus(429);
+            er.setError("Too Many Requests");
+            er.setMessage("Too Many Requests");
+            er.setPath(request.getRequestURI());
+            ObjectMapper om = new ObjectMapper();
+            om.writeValue(response.getWriter(), er);
             return;
         }
 
