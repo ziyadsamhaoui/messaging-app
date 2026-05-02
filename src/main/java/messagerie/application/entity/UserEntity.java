@@ -2,9 +2,8 @@ package messagerie.application.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import lombok.*;
 
 
 @Entity
@@ -32,4 +31,5 @@ public class UserEntity {
         this.passwordHash = passwordHash;
         this.createdAt = LocalDateTime.now();
     }
+
 }

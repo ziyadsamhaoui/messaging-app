@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 import org.springframework.dao.DataIntegrityViolationException;
+import messagerie.application.exception.BadRequestException;
+import messagerie.application.exception.NotFoundException;
 import messagerie.application.dto.ConversationPageDTO;
 
 
@@ -46,20 +48,20 @@ public class ConversationService {
     public ConversationEntity createPrivateConversation(Long creatorId, String targetUsername, String name){
 
         if (!userRepository.existsById(creatorId)) {
-            throw new RuntimeException("User not found");
+            throw new NotFoundException("Creator user not found");
         }
 
         // find the target user by username
         var targetOpt = userRepository.findByUsername(targetUsername);
         if (targetOpt.isEmpty()) {
-            throw new RuntimeException("Target user not found");
+            throw new NotFoundException("Target user not found");
         }
 
         var targetUser = targetOpt.get();
         Long targetId = targetUser.getUserId();
 
         if (creatorId.equals(targetId)) {
-            throw new RuntimeException("Cannot create a private conversation with yourself");
+            throw new BadRequestException("Cannot create a private conversation with yourself");
         }
 
         // check if a private conversation already exists between the two users
@@ -124,7 +126,7 @@ public class ConversationService {
     public ConversationEntity createGroupConversation(Long creatorId, List<String> participantUsernames, String name) {
 
         if (!userRepository.existsById(creatorId)) {
-            throw new RuntimeException("Creator user not found");
+            throw new NotFoundException("Creator user not found");
         }
 
         // Normalize input list into a set of unique usernames
@@ -133,7 +135,7 @@ public class ConversationService {
         // Ensure creator is included
         var creatorOpt = userRepository.findById(creatorId);
         if (creatorOpt.isEmpty()) {
-            throw new RuntimeException("Creator user not found");
+            throw new NotFoundException("Creator user not found");
         }
         var creator = creatorOpt.get();
         usernames.add(creator.getUsername());
@@ -153,12 +155,12 @@ public class ConversationService {
         }
 
         if (!missing.isEmpty()) {
-            throw new RuntimeException("Some users not found: " + String.join(",", missing));
+            throw new NotFoundException("Some users not found: " + String.join(",", missing));
         }
 
         // Need at least 2 participants for a group
         if (userIds.size() < 2) {
-            throw new RuntimeException("A group conversation requires at least 2 participants");
+            throw new BadRequestException("A group conversation requires at least 2 participants");
         }
 
         // create conversation and set optional display name
@@ -240,9 +242,6 @@ public class ConversationService {
         return new ConversationPageDTO(dtoList, nextCursor);
     }
 
-    /**
-     * Map ConversationEntity to ConversationDTO, including participant user information.
-     */
     public ConversationDTO toDTO(ConversationEntity c) {
         var participants = participantRepository.findByConversationId(c.getConversationId());
         var userDtos = participants.stream().map(p -> {

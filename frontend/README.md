@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Verdant Messages Frontend
 
-## Getting Started
+A Next.js + Tailwind frontend for the messaging backend. It follows `frontend/FRONTEND_INSTRUCTIONS.md` and ships with a botanical theme, STOMP WebSocket support, and cursor-based pagination UI.
 
-First, run the development server:
+## Requirements
+- Node.js 18+ (or 20+ recommended)
+- Backend running (see root README or backend docs)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Environment
+Create a `.env.local` file in `frontend/`:
+
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_WS_URL=http://localhost:8000/ws
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run
+```
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open `http://localhost:3000`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
+```
+npm run check:env   # quick env validation
+npm run lint
+npm run build
+```
 
-## Learn More
+## Structure
+- `app/` pages for `/`, `/login`, `/app`
+- `components/` UI, chat, sidebar, and layout building blocks
+- `lib/` API client, auth context, STOMP client, and types
+- `hooks/` data and websocket hooks
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes
+- Tokens are stored in memory only (refreshing the page logs you out).
+- WebSocket errors surface via `/user/queue/errors` and show a toast.

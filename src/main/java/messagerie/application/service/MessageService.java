@@ -7,6 +7,8 @@ import messagerie.application.repository.*;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import messagerie.application.dto.MessageDTO;
+import messagerie.application.exception.NotFoundException;
+import messagerie.application.exception.ForbiddenException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
@@ -36,18 +38,18 @@ public class MessageService {
 
         // check sender exists
         userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         // check conversation exists
         conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+                .orElseThrow(() -> new NotFoundException("Conversation not found"));
 
         // check sender is participant of conversation
         boolean isParticipant =
                 participantRepository
                         .existsByConversationIdAndUserId(conversationId, senderId);
         if(!isParticipant) {
-            throw new RuntimeException("User not part of conversation");
+            throw new ForbiddenException("User not part of conversation");
         }
 
         // create and save message
@@ -61,13 +63,6 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    /**
-     * Returns a page of messages for a conversation using ID-based cursor pagination.
-     * Cursor is expected to be a messageId (as Long). If cursor is null, returns the latest messages.
-     * The messages are returned in descending order (newest first). The returned MessagePageDTO contains
-     * a nextCursor which is the messageId of the last item in the returned page and should be used
-     * to fetch the next page (older messages) by passing it as the cursor parameter.
-     */
     public MessagePageDTO getMessages(Long conversationId, Long cursor, int limit) {
         int pageSize = Math.max(1, limit);
         int fetchSize = pageSize + 1; // fetch one extra item to determine whether another page exists

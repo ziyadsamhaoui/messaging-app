@@ -52,7 +52,7 @@ public class ConversationController {
             return ResponseEntity.status(401).build();
         }
 
-        Long creatorId = optUser.get().getId();
+        Long creatorId = optUser.get().getUserId();
 
         if (req.getType() == messagerie.application.enums.ConversationType.PRIVATE) {
             if (req.getTargetUsername() == null || req.getTargetUsername().isBlank()) {

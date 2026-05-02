@@ -49,48 +49,109 @@ This is a **real-time messaging web app** targeting both mobile and desktop. It 
 
 ### Page 1 — Landing Page (`/`)
 
-The public face of the product. Should feel distinctive and intentional, not like a generic SaaS template.
+A single-screen, full-viewport landing page. **No scrolling sections, no feature grids, no footer prose** — just a clean, immediate first view that converts. The palette is co-dominant: parchment backgrounds split against a forest navbar and dark left panel.
 
-**Required sections:**
-- Hero — strong headline, short tagline, CTA buttons (Get Started, Login)
-- Features — 3–4 key features with iconography or illustration
-- Footer — minimal, with links
+**Layout (Desktop):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Logo — forest text]            [Sign up]  [Log in]        │  ← Navbar: parchment bg, forest text
+├──────────────────────────┬──────────────────────────────────┤
+│  forest-bg left panel    │  parchment-bg right panel        │
+│                          │                                  │
+│  Large display headline  │   Floating chat UI mockup        │
+│  (parchment text)        │   (message bubbles, avatars,     │
+│                          │    conversational preview)       │
+│  Short tagline           │   bubbles: fern (sent) +         │
+│  (sage text)             │   forest (received)              │
+│                          │                                  │
+│  [Get Started →]         │                                  │
+│  [Why AppName?]          │                                  │
+│                          │                                  │
+│  Fast. Private. Simple.  │                                  │
+└──────────────────────────┴──────────────────────────────────┘
+```
+
+**Layout (Mobile):**
+- Full-width parchment page
+- Forest navbar top
+- Headline and CTA stacked, forest text on parchment bg
+- Chat mockup below CTA, full-width scaled card
+- Three stat pills at bottom
+
+**Required elements:**
+- Navbar: forest background, parchment logo text, "Sign up" (fern filled button) + "Log in" (parchment outlined)
+- Left panel: forest (`#285430`) with large parchment display-font headline (2–3 lines)
+- Tagline: sage colored, `text-base` / `text-lg`, 2 lines max
+- Two CTA buttons: "Get started →" (fern fill, parchment text) + "Why [AppName]?" (transparent, sage border)
+- Three micro-stats row: e.g. "Fast enough. / Private. / Simple." — sage muted text
+- Right panel: parchment (`#E5D9B6`) background with floating chat mockup card
+- Chat mockup: static decorative HTML showing 3–4 sample message bubbles — sent (fern bg) and received (forest bg), avatar circles in sage
 
 **Design notes:**
-- The hero should use rich background treatment (gradient mesh, layered botanical patterns, or geometric texture)
-- Typography should lead — use a large, expressive display font
-- Staggered entrance animations on page load
-- Mobile: stack everything vertically; CTA should be full-width
-- Desktop: allow asymmetric layouts, overlapping elements, or bold negative space
+- The left/right split IS the palette — don't fight it, lean into it
+- Navbar sits above the split as a single forest bar
+- Chat mockup on right should feel elevated: subtle forest drop shadow, slight `rotate-1` or card border in `sage/20`
+- Staggered entrance animations: headline words fade+slide in from left, mockup slides in from right
+- No orange/pink gradients — the fern button is the only CTA accent needed
+- Navbar border-bottom: `border-b border-parchment/10`
 
 ---
 
 ### Page 2 — Login / Register (`/login`)
 
-A focused, distraction-free auth experience that still carries the product's personality.
+A modern, split-personality auth page. The card sits centered on a **parchment** background, but the card itself is **forest** — a dark green panel floating on warm cream. This creates immediate visual contrast and reinforces the co-dominant palette. The heading adapts per mode: **"Welcome Back"** for login, **"Create Your Account"** for register.
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Logo — forest text]          parchment page background    │  ← top-left, links back to /
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│              ┌───────────────────────────┐                  │
+│              │  forest surface card      │                  │
+│              │                           │                  │
+│              │  Welcome Back             │  ← login mode   │
+│              │  Good to see you again.   │                  │
+│              │  ─────────────────────    │                  │
+│              │  Create Your Account      │  ← register mode│
+│              │  Join and start chatting. │                  │
+│              │                           │                  │
+│              │  [Username input   👤]    │                  │
+│              │  [Password input   👁]    │                  │
+│              │  [████ strength bar]      │  register only  │
+│              │                           │                  │
+│              │  [  Log In / Sign Up  ]   │  ← fern button  │
+│              │                           │                  │
+│              │  Don't have an account?   │                  │
+│              │  Create one →             │  ← sage link    │
+│              └───────────────────────────┘                  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 **Required elements:**
-- Toggle between Login and Register tabs/views
-- Login form: username + password fields + submit
-- Register form: username + password + confirm password fields + submit
-- Animated transition between forms
-- Error state handling (inline field errors using `ErrorResponse.message`)
-- "Back to home" link
+- Page background: parchment (`#E5D9B6`)
+- App logo top-left (outside card), forest color, links to `/`
+- Centered card: forest surface (`#285430`), `rounded-2xl`, parchment-tinted shadow (`shadow-[0_8px_40px_rgba(40,84,48,0.25)]`)
+- **Welcome heading:** `"Welcome Back"` (login) / `"Create Your Account"` (register) — large, parchment text, display font
+- **Subline:** `"Good to see you again."` (login) / `"Join and start chatting."` (register) — sage color, smaller weight
+- Thin sage divider line below the subline
+- Input fields: `bg-forest-surface` (`#2E5E37`) background, parchment text, sage placeholder text, fern focus ring
+    - Trailing icon on the right (user icon, eye-toggle for password) — sage colored
+- Password strength bar (register only): 4 parchment-dim segments that fill with sage → fern → fern-dark as strength grows, labeled "Weak" / "Fair" / "Strong"
+- Primary CTA button: full-width, fern fill (`#5F8D4E`), parchment text, `hover:bg-fern-dark`, smooth scale on press
+- Footer toggle: "Don't have an account? **Create one →**" (login) / "Already have one? **Log in →**" (register) — muted parchment-dim text, sage colored link
+- Animated crossfade / slide transition when switching between modes
+- Show spinner inside CTA on submit; disable fields during request
+- Error messages: small red text (`--color-error`) below the relevant input
 
 **Design notes:**
-- Consider a split-screen layout on desktop (decorative/brand half + form half)
-- Form inputs should feel polished — custom focus rings, smooth transitions
-- Mobile: full-screen single-column
-- Show loading spinner on submit; disable form during request
-
-**API:**
-```
-POST /api/auth/login
-Body: { "username": "string", "password": "string" }
-Response 200: { "token": "<jwt>", "username": "...", "userId": 123, ... }
-```
-- On success: store token in React context (not localStorage unless XSS defenses are in place), redirect to `/app`
-- On error: display `ErrorResponse.message` below the form
+- The contrast of the dark forest card on the warm parchment page is the visual statement — don't soften it
+- No Google OAuth button (keep it clean unless explicitly needed)
+- Mobile: card fills viewport with `mx-4`, slightly less padding
+- The welcome message is the personality — make the font large and the subline feel warm, not clinical
+- Input fields on the dark card should use a slightly lighter forest tone so they're distinguishable from the card background
+- Avoid white anywhere on this page — stay strictly within the four-color system
 
 ---
 
@@ -143,47 +204,102 @@ Mobile:
 
 ## Color Palette
 
-The app uses a **warm botanical palette** — earthy, grounded, and distinctive. It evokes natural depth without being dull. All tokens must be defined as CSS/Tailwind variables.
+One unified palette used **across all pages** — landing, auth, and app interior. The palette is built around two co-dominant anchors: **parchment** (warm beige) and **forest** (deep green), with fern and sage as midtone accents. Neither color dominates exclusively — they share equal visual weight, splitting large surfaces between them.
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--color-parchment` | `#E5D9B6` | Light backgrounds, message bubbles (received), cards |
-| `--color-sage` | `#A4BE7B` | Secondary accents, tags, online indicators, hover states |
-| `--color-fern` | `#5F8D4E` | Primary actions, buttons, links, active states |
-| `--color-forest` | `#285430` | Dark primary, sidebar background, dominant dark surface |
+### The Four Tokens
 
-**Extended tokens to derive:**
+| Token | Hex | Role |
+|-------|-----|------|
+| `--color-parchment` | `#E5D9B6` | **Co-dominant light anchor** — page backgrounds, right-side panels, message bubbles (received), form cards |
+| `--color-sage` | `#A4BE7B` | **Accent / midtone** — hover states, tags, online indicators, secondary UI, dividers |
+| `--color-fern` | `#5F8D4E` | **Action color** — buttons, CTAs, links, active conversation highlights, sent message bubbles |
+| `--color-forest` | `#285430` | **Co-dominant dark anchor** — sidebar backgrounds, navbars, dark surfaces, headers |
+
+### Dominant Color Strategy
+
+> **Forest and parchment split the canvas.** The layout should feel like two panels of a painting — one rich dark green, one warm cream — held together by fern and sage accents. Avoid making one color 80%+ of the screen. Aim for roughly 45/45/10 between forest, parchment, and the accent pair.
+
+Example surface mapping:
+- Landing page: **parchment** background (`#E5D9B6`) with **forest** navbar — not dark-on-dark
+- Auth card: **forest** card surface on a **parchment** page background — card floats as a dark panel against warm cream
+- App sidebar: **forest** (`#285430`)
+- App chat pane: **parchment** (`#E5D9B6`) as the main message area background
+- Sent bubbles: **fern** (`#5F8D4E`) text in parchment, or fern fill
+- Received bubbles: **forest** (`#285430`) fill with parchment text
+
+### Full CSS Token Set
+
 ```css
 :root {
-  --color-parchment:   #E5D9B6;
-  --color-parchment-dim: #D4C89E;
-  --color-sage:        #A4BE7B;
-  --color-sage-muted:  #8FAD62;
-  --color-fern:        #5F8D4E;
-  --color-fern-dark:   #4A7040;
-  --color-forest:      #285430;
-  --color-forest-deep: #1A3A20;
+  /* Core four */
+  --color-parchment:      #E5D9B6;
+  --color-parchment-dim:  #D4C89E;
+  --color-parchment-deep: #C9BA8C;
+  --color-sage:           #A4BE7B;
+  --color-sage-muted:     #8FAD62;
+  --color-fern:           #5F8D4E;
+  --color-fern-dark:      #4A7040;
+  --color-forest:         #285430;
+  --color-forest-deep:    #1A3A20;
 
-  /* Semantic */
-  --color-bg:          #1A3A20;      /* dark page background */
-  --color-surface:     #285430;      /* cards, panels */
-  --color-surface-2:   #2E5E37;      /* elevated surfaces */
-  --color-text-primary: #E5D9B6;
-  --color-text-secondary: #A4BE7B;
-  --color-text-muted:  #7A9E67;
-  --color-accent:      #A4BE7B;
-  --color-cta:         #5F8D4E;
-  --color-cta-hover:   #4A7040;
-  --color-error:       #C0392B;
-  --color-border:      rgba(164, 190, 123, 0.2);
+  /* Semantic — light surfaces (parchment-dominant contexts) */
+  --color-bg-light:       #E5D9B6;   /* page background */
+  --color-surface-light:  #D4C89E;   /* cards on light bg */
+  --color-input-light:    #F0EAD6;   /* form inputs on light bg */
+
+  /* Semantic — dark surfaces (forest-dominant contexts) */
+  --color-bg-dark:        #285430;   /* sidebar, navbar, dark panels */
+  --color-surface-dark:   #1A3A20;   /* elevated elements on dark bg */
+  --color-input-dark:     #2E5E37;   /* form inputs on dark bg */
+
+  /* Text */
+  --color-text-on-light:  #285430;   /* forest text on parchment */
+  --color-text-on-dark:   #E5D9B6;   /* parchment text on forest */
+  --color-text-secondary: #A4BE7B;   /* sage for secondary/muted */
+  --color-text-muted:     #7A9E67;
+
+  /* Utility */
+  --color-border-light:   rgba(40, 84, 48, 0.2);   /* forest border on parchment */
+  --color-border-dark:    rgba(229, 217, 182, 0.15); /* parchment border on forest */
+  --color-error:          #B83232;
+  --color-online:         #A4BE7B;   /* sage dot for online status */
 }
 ```
 
-**Theme guidance:**
-- Dark theme is the default (forest + parchment text)
-- Consider a light mode toggle where parchment becomes the background and forest becomes text
-- Avoid introducing colors outside this system — instead derive tints/shades and use opacity
-- Message bubbles: sent = fern background, received = parchment/forest surface
+### Tailwind Config
+
+```js
+// tailwind.config.ts
+theme: {
+  extend: {
+    colors: {
+      parchment: {
+        DEFAULT: '#E5D9B6',
+        dim:     '#D4C89E',
+        deep:    '#C9BA8C',
+        light:   '#F0EAD6',
+      },
+      sage: {
+        DEFAULT: '#A4BE7B',
+        muted:   '#8FAD62',
+      },
+      fern: {
+        DEFAULT: '#5F8D4E',
+        dark:    '#4A7040',
+      },
+      forest: {
+        DEFAULT: '#285430',
+        deep:    '#1A3A20',
+        surface: '#2E5E37',
+      },
+    },
+    fontFamily: {
+      display: ['YourDisplayFont', 'serif'],   // distinctive, non-generic
+      body:    ['YourBodyFont', 'sans-serif'],
+    },
+  }
+}
+```
 
 ---
 
@@ -200,25 +316,7 @@ The app uses a **warm botanical palette** — earthy, grounded, and distinctive.
 | HTTP | `fetch` with a typed wrapper, or Axios |
 
 ### Tailwind Config Note
-Extend Tailwind's config to include the palette tokens:
-```js
-// tailwind.config.ts
-theme: {
-  extend: {
-    colors: {
-      parchment: '#E5D9B6',
-      sage:      '#A4BE7B',
-      fern:      '#5F8D4E',
-      forest:    '#285430',
-    },
-    fontFamily: {
-      // Add your chosen display and body fonts here
-      display: ['YourDisplayFont', 'serif'],
-      body:    ['YourBodyFont', 'sans-serif'],
-    }
-  }
-}
-```
+See the full config in the Color Palette section above. Remember to also register your font families there.
 
 ---
 

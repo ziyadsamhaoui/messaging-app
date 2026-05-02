@@ -168,6 +168,11 @@
             <artifactId>mxparser</artifactId>
             <version>1.2.2</version>
         </dependency>
+        <!-- Ensure Jackson ObjectMapper is available at compile/runtime -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
