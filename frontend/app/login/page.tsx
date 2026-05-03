@@ -25,6 +25,14 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const toast = useToast();
+  // card width classes: make login card slightly smaller horizontally than the register card
+  const cardWidthClasses =
+    mode === "register"
+      ? "max-w-lg md:max-w-2xl lg:max-w-4xl"
+      : "max-w-md md:max-w-lg lg:max-w-xl";
+
+  const submitScaleClass = mode === "register" ? "" : "hover:scale-[1.02] active:scale-[0.98]";
+  const cardHoverClass = mode === "register" ? "hover:scale-[1.01] hover:shadow-[0_8px_60px_rgba(95,141,78,0.2)]" : "hover:scale-[1.01] hover:shadow-[0_8px_60px_rgba(95,141,78,0.2)]";
 
   const strengthScore = React.useMemo(() => {
     let score = 0;
@@ -35,12 +43,11 @@ export default function LoginPage() {
     return score;
   }, [password]);
 
-  // label mapping: index 1..4 -> Weak..Excellent, index 0 = empty (no label)
+
   const strengthLabels = ["", "Weak", "Fair", "Strong", "Excellent"];
   const strengthLabel = strengthScore > 0 ? strengthLabels[strengthScore] : "";
-
-  // native-like strength colors for the 4 segments: red, orange, yellow, green
   const strengthColors = ["bg-red-500", "bg-orange-400", "bg-yellow-400", "bg-green-500"];
+
 
   async function handleSubmit() {
     setError(null);
@@ -82,20 +89,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-auto bg-cover bg-center text-[var(--color-parchment)]">
-      {/* Nav bar - parchment gradient as requested */}
-      <nav className="w-full h-17 bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] border-b border-[rgba(40,84,48,0.06)] py-3 px-6 shadow-sm z-20">
-        <div className="max-w-7xl mx-auto flex items-center">
-              <Image
-                src={"/frontend/public/favicon.png"}
-                width={20}
-                height={20}
-                alt="BadrLink favicon"
-                className="w-auto h-auto"
-                style={{ width: "auto", height: "auto" }}
-              />
-          <Link href="/" className="font-display text-lg font-bold text-[var(--color-forest)]">
-            BadrLink
+    <div className="relative min-h-full overflow-auto bg-cover bg-center text-[var(--color-parchment)]">
+      {/* Nav bar */}
+      <nav className="relative z-20 w-full h-17 bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] border-b border-[rgba(40,84,48,0.06)] py-1 px-6 shadow-sm">
+        <div className="w-full flex items-center justify-start pl-0">
+
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/favicon.png"
+              width={60}
+              height={60}
+              alt="BadrLink favicon"
+
+              className="inline-block"
+            />
+            <span className="font-display text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-forest)] hover:animate-pulse">
+              BadrLink
+            </span>
           </Link>
         </div>
       </nav>
@@ -111,9 +121,9 @@ export default function LoginPage() {
              <motion.div
                initial={{ opacity: 0, y: 18 }}
                animate={{ opacity: 1, y: 0 }}
-               className="relative z-10 w-full max-w-lg md:max-w-2xl lg:max-w-4xl rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(26,58,32,0.9)] p-8 text-[var(--color-parchment)] shadow-2xl backdrop-blur-xl transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_8px_60px_rgba(95,141,78,0.2)] sm:p-10"
+               className={`relative z-10 w-full ${cardWidthClasses} rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(26,58,32,0.9)] p-8 text-[var(--color-parchment)] shadow-2xl backdrop-blur-xl transition-all duration-500 ${cardHoverClass} sm:p-10`}
              >
-               <div className="mx-auto mb-6 flex h-17 w-17 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] animate-pulse">
+               <div className="mx-auto mb-6 flex h-17 w-17 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)]">
                  <svg
                    viewBox="0 0 24 24"
                    fill="none"
@@ -285,7 +295,7 @@ export default function LoginPage() {
                          label={mode === "login" ? "Username or Email" : "Email address"}
                          value={mode === "login" ? username : email}
                          onChange={(e) => (mode === "login" ? setUsername(e.target.value) : setEmail(e.target.value))}
-                         placeholder={mode === "login" ? "forestwalker" : "ziyadsamhaoui@example.com"}
+                         placeholder={mode === "login" ? "ziyadsamhaoui@example.com" : "ziyadsamhaoui@example.com"}
                          disabled={loading}
                          className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11"
                        />
@@ -316,12 +326,12 @@ export default function LoginPage() {
                    </>
                  )}
 
-                 <button
-                   type="button"
-                   onClick={handleSubmit}
-                   disabled={loading}
-                   className="group relative mt-2 flex cursor-pointer h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-fern)] text-[var(--color-parchment)] font-semibold shadow-lg transition-all duration-300 hover:shadow-[0_12px_40px_rgba(95,141,78,0.25)] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
-                 >
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className={`group relative mt-2 flex cursor-pointer h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-fern)] text-[var(--color-parchment)] font-semibold shadow-lg transition-all duration-300 hover:shadow-[0_12px_40px_rgba(95,141,78,0.25)] ${submitScaleClass} disabled:opacity-60`}
+                  >
                    <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-white/0 via-white/10 to-white/0 transition-transform duration-1000 group-hover:translate-x-[100%]" />
                    <span className="relative flex items-center gap-2">
                      {loading ? (mode === "login" ? "Signing in..." : "Creating account...") : (mode === "login" ? "Sign In" : "Create Account")}
@@ -330,7 +340,7 @@ export default function LoginPage() {
                  </button>
                </div>
                 
-                <div className="mt-6 text-center text-xs text-[var(--color-parchment-dim)]">
+                <div className="mt-6 text-center text-sm text-[var(--color-parchment-dim)]">
                   {mode === "login" ? "Don't have an account?" : "Already have an account?"} {" "}
                   <button
                     type="button"
