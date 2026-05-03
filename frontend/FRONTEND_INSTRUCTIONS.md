@@ -1,4 +1,4 @@
-# Messaging App — Frontend Instructions
+# BadrLink — Frontend Instructions
 
 ---
 
@@ -28,6 +28,7 @@ Create atmosphere rather than defaulting to solid fills. Layer CSS gradients, ge
 - Cookie-cutter card layouts with border-radius: 8px everywhere
 - Generic iconography without personality
 - Evenly distributed palettes with no dominant anchor
+- Nav bar of a darker color with BadrLink in the same color but lighter (e.g., forest navbar with lighter forest text) — this creates a muddy, low-contrast look. Instead, use the **co-dominant color strategy** outlined in the palette section to ensure clear contrast and visual hierarchy, gradient with hover color animation.
 
 **Interpret creatively. Make choices that feel genuinely designed for this specific product.** Vary between light and dark themes, different type hierarchies, different spatial compositions.
 
@@ -35,7 +36,7 @@ Create atmosphere rather than defaulting to solid fills. Layer CSS gradients, ge
 
 ## App Overview & Pages
 
-This is a **real-time messaging web app** targeting both mobile and desktop. It must be fully responsive from the start (mobile-first). **TailwindCSS is mandatory** for layout and utility classes.
+This is **BadrLink** — a real-time messaging web app targeting both mobile and desktop. It must be fully responsive from the start (mobile-first). **TailwindCSS is mandatory** for layout and utility classes.
 
 ### Pages to Build
 
@@ -49,156 +50,372 @@ This is a **real-time messaging web app** targeting both mobile and desktop. It 
 
 ### Page 1 — Landing Page (`/`)
 
-A single-screen, full-viewport landing page. **No scrolling sections, no feature grids, no footer prose** — just a clean, immediate first view that converts. The palette is co-dominant: parchment backgrounds split against a forest navbar and dark left panel.
+Full-viewport, single-screen. No scrolling content below the fold on desktop. Everything — background, overlays, bubbles, quote, illustration — lives on this one screen.
 
-**Layout (Desktop):**
+---
+
+#### Background
+
+- **Base layer:** `bg-[url('/images/backgroundforlogin.jpg')] bg-center bg-cover min-h-screen` — the same background image used on the auth page, providing visual continuity across public pages
+- **Animated gradient overlay:** absolute inset div — `bg-gradient-to-br from-forest/70 via-fern/40 to-parchment/30` with a slow `animate-pulse` (6s cycle, subtle)
+- **Floating orbs:** 4 absolute-positioned blurred circle divs at staggered positions and opacities — `bg-sage/10`, `bg-fern/15`, `bg-parchment/10`, `bg-forest/20` — each with different `animate-bounce` delays (200ms, 500ms, 700ms, 1000ms) and sizes (`w-24 h-24`, `w-16 h-16`, etc.)
+- **Never a plain solid color** on any surface
+
+---
+
+#### Navbar
+
+Sits at the top of the page, `relative z-20`:
+- `bg-gradient-to-r from-forest/80 to-forest-deep/60 backdrop-blur-sm`
+- `border-b border-parchment/10 px-6 py-4`
+- Left: `"BadrLink"` logo — gradient text `from-parchment to-sage bg-clip-text text-transparent`, display font, bold
+- Right: `"Sign Up"` button (`bg-gradient-to-r from-fern to-sage text-parchment rounded-xl px-5 py-2 hover:scale-[1.03]`) + `"Log In"` button (outlined, `border border-parchment/40 text-parchment/80 rounded-xl px-5 py-2 hover:bg-parchment/10`)
+
+---
+
+#### Main Content Area
+
+Below the navbar, centered vertically, `relative z-10`:
+
+**Desktop layout:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  [Logo — forest text]            [Sign up]  [Log in]        │  ← Navbar: parchment bg, forest text
-├──────────────────────────┬──────────────────────────────────┤
-│  forest-bg left panel    │  parchment-bg right panel        │
-│                          │                                  │
-│  Large display headline  │   Floating chat UI mockup        │
-│  (parchment text)        │   (message bubbles, avatars,     │
-│                          │    conversational preview)       │
-│  Short tagline           │   bubbles: fern (sent) +         │
-│  (sage text)             │   forest (received)              │
-│                          │                                  │
-│  [Get Started →]         │                                  │
-│  [Why AppName?]          │                                  │
-│                          │                                  │
-│  Fast. Private. Simple.  │                                  │
-└──────────────────────────┴──────────────────────────────────┘
+│  [left bubble 1]                        [right bubble 1]    │
+│                                                             │
+│  [left bubble 2]   HEADLINE + CTA    [right bubble 2]      │
+│                    [texting_image]                          │
+│                    quote below                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Layout (Mobile):**
-- Full-width parchment page
-- Forest navbar top
-- Headline and CTA stacked, forest text on parchment bg
-- Chat mockup below CTA, full-width scaled card
-- Three stat pills at bottom
+The headline, CTA, illustration, and quote are **center-stacked**, with the 4 chat bubbles floating absolutely to the left and right — mirroring the reference screenshot's composition.
 
-**Required elements:**
-- Navbar: forest background, parchment logo text, "Sign up" (fern filled button) + "Log in" (parchment outlined)
-- Left panel: forest (`#285430`) with large parchment display-font headline (2–3 lines)
-- Tagline: sage colored, `text-base` / `text-lg`, 2 lines max
-- Two CTA buttons: "Get started →" (fern fill, parchment text) + "Why [AppName]?" (transparent, sage border)
-- Three micro-stats row: e.g. "Fast enough. / Private. / Simple." — sage muted text
-- Right panel: parchment (`#E5D9B6`) background with floating chat mockup card
-- Chat mockup: static decorative HTML showing 3–4 sample message bubbles — sent (fern bg) and received (forest bg), avatar circles in sage
+**Mobile layout:** bubbles hidden, headline + illustration + CTA stacked full-width, quote below.
 
-**Design notes:**
-- The left/right split IS the palette — don't fight it, lean into it
-- Navbar sits above the split as a single forest bar
-- Chat mockup on right should feel elevated: subtle forest drop shadow, slight `rotate-1` or card border in `sage/20`
-- Staggered entrance animations: headline words fade+slide in from left, mockup slides in from right
-- No orange/pink gradients — the fern button is the only CTA accent needed
-- Navbar border-bottom: `border-b border-parchment/10`
+---
+
+#### Center Stack (Desktop & Mobile)
+
+**Headline:**
+- 2–3 lines, large display font — `text-5xl sm:text-6xl lg:text-7xl font-bold`
+- Gradient text: `bg-gradient-to-r from-parchment via-sage to-parchment bg-clip-text text-transparent`
+- Line 1: plain/bold, Lines 2–3: italic or weight contrast for personality
+- Example: *"Where words feel closer. And people do too."*
+- Fade-up animation, `animation-delay: 0ms`
+
+**Tagline:**
+- 1–2 lines below headline, `text-base lg:text-lg text-sage/80`
+- Example: "A web-based app that keeps you connected with the people who matter most."
+- Fade-up, `animation-delay: 150ms`
+
+**CTA Buttons (row):**
+- Primary: `"Get Started →"` — `bg-gradient-to-r from-fern to-sage text-parchment font-semibold rounded-2xl px-8 py-3 hover:scale-[1.03] hover:shadow-lg hover:shadow-fern/30 active:scale-[0.97] transition-all duration-300`
+- Secondary: `"Why BadrLink?"` — `border border-parchment/30 text-parchment/70 rounded-2xl px-6 py-3 backdrop-blur-sm hover:bg-parchment/10 transition-all`
+- Fade-up, `animation-delay: 300ms`
+
+**`/app/texting_image.png` illustration:**
+- Centered below or overlapping the headline area
+- `w-40 h-40 md:w-56 md:h-56 object-contain`
+- `drop-shadow-[0_8px_24px_rgba(95,141,78,0.3)]`
+- Fade-up, `animation-delay: 400ms`
+
+**Quote:**
+- Below illustration: *"Closer than a whisper, warmer than a thought."*
+- Italic, display font, `text-lg md:text-xl`
+- Gradient text: `bg-gradient-to-r from-parchment via-sage to-parchment bg-clip-text text-transparent`
+- Fade-up animation, `animation-delay: 500ms`
+
+**Three micro-stats row:**
+- `"Fast enough."` / `"Private."` / `"Simple."` with subdescription in muted sage
+- Separated by thin `border-r border-parchment/20` dividers
+- `text-parchment/70 text-sm` for labels, `text-sage/60 text-xs` for sub-labels
+- Fade-up, `animation-delay: 600ms`
+
+---
+
+#### Decorative Chat Bubbles (Desktop only — `hidden md:flex`)
+
+4 absolutely positioned chat bubbles flanking the center content:
+
+**Left pair** (`absolute left-[3%] md:left-[6%]`):
+- Bubble 1 (higher): `bg-gradient-to-br from-forest/80 to-fern/60 backdrop-blur-sm border border-sage/20 rounded-2xl px-4 py-3 text-parchment text-sm`
+    - Content: `"Hey, you free tonight? 👋"`
+    - Avatar circle left: `bg-gradient-to-br from-sage to-fern w-8 h-8 rounded-full`
+- Bubble 2 (lower): same gradient family, slightly different position/opacity
+    - Content: `"Miss talking to you 🌿"`
+- Fade-in with `animation-delay: 300ms` and `500ms`
+
+**Right pair** (`absolute right-[3%] md:right-[6%]`):
+- Bubble 1: `bg-gradient-to-br from-sage/70 to-parchment/60 backdrop-blur-sm border border-parchment/30 rounded-2xl px-4 py-3 text-forest text-sm`
+    - Content: `"Always for you 😊"`
+    - Avatar circle right: `bg-gradient-to-br from-parchment to-sage w-8 h-8 rounded-full`
+- Bubble 2:
+    - Content: `"Same time tomorrow? ✨"`
+- Fade-in with `animation-delay: 400ms` and `700ms`
+
+Left and right bubble pairs use **different gradient directions** (`to-br` vs `to-tr`) and **different text colors** (parchment vs forest) so they're visually distinct.
+
+---
+
+#### Animations (global CSS)
+
+```css
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-5px); }
+  75%       { transform: translateX(5px); }
+}
+
+.animate-fade-up  { animation: fade-up 0.8s ease-out forwards; }
+.animate-fade-in  { animation: fade-in 0.6s ease-out forwards; }
+.animate-shake    { animation: shake 0.5s ease-in-out; }
+```
+
+All elements start `opacity-0` and use staggered `animation-delay` to sequence the reveal.
 
 ---
 
 ### Page 2 — Login / Register (`/login`)
 
-A modern, split-personality auth page. The card sits centered on a **parchment** background, but the card itself is **forest** — a dark green panel floating on warm cream. This creates immediate visual contrast and reinforces the co-dominant palette. The heading adapts per mode: **"Welcome Back"** for login, **"Create Your Account"** for register.
+Same animated background as the landing page (`/images/backgroundforlogin.jpg` + gradient overlay + floating orbs). The content is a single centered auth card with no decorative bubbles or illustration — focused, minimal, immersive.
 
-**Layout:**
-```
-┌─────────────────────────────────────────────────────────────┐
-│  [Logo — forest text]          parchment page background    │  ← top-left, links back to /
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│              ┌───────────────────────────┐                  │
-│              │  forest surface card      │                  │
-│              │                           │                  │
-│              │  Welcome Back             │  ← login mode   │
-│              │  Good to see you again.   │                  │
-│              │  ─────────────────────    │                  │
-│              │  Create Your Account      │  ← register mode│
-│              │  Join and start chatting. │                  │
-│              │                           │                  │
-│              │  [Username input   👤]    │                  │
-│              │  [Password input   👁]    │                  │
-│              │  [████ strength bar]      │  register only  │
-│              │                           │                  │
-│              │  [  Log In / Sign Up  ]   │  ← fern button  │
-│              │                           │                  │
-│              │  Don't have an account?   │                  │
-│              │  Create one →             │  ← sage link    │
-│              └───────────────────────────┘                  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+---
 
-**Required elements:**
-- Page background: parchment (`#E5D9B6`)
-- App logo top-left (outside card), forest color, links to `/`
-- Centered card: forest surface (`#285430`), `rounded-2xl`, parchment-tinted shadow (`shadow-[0_8px_40px_rgba(40,84,48,0.25)]`)
-- **Welcome heading:** `"Welcome Back"` (login) / `"Create Your Account"` (register) — large, parchment text, display font
-- **Subline:** `"Good to see you again."` (login) / `"Join and start chatting."` (register) — sage color, smaller weight
-- Thin sage divider line below the subline
-- Input fields: `bg-forest-surface` (`#2E5E37`) background, parchment text, sage placeholder text, fern focus ring
-    - Trailing icon on the right (user icon, eye-toggle for password) — sage colored
-- Password strength bar (register only): 4 parchment-dim segments that fill with sage → fern → fern-dark as strength grows, labeled "Weak" / "Fair" / "Strong"
-- Primary CTA button: full-width, fern fill (`#5F8D4E`), parchment text, `hover:bg-fern-dark`, smooth scale on press
-- Footer toggle: "Don't have an account? **Create one →**" (login) / "Already have one? **Log in →**" (register) — muted parchment-dim text, sage colored link
-- Animated crossfade / slide transition when switching between modes
-- Show spinner inside CTA on submit; disable fields during request
-- Error messages: small red text (`--color-error`) below the relevant input
+#### Background
 
-**Design notes:**
-- The contrast of the dark forest card on the warm parchment page is the visual statement — don't soften it
-- No Google OAuth button (keep it clean unless explicitly needed)
-- Mobile: card fills viewport with `mx-4`, slightly less padding
-- The welcome message is the personality — make the font large and the subline feel warm, not clinical
-- Input fields on the dark card should use a slightly lighter forest tone so they're distinguishable from the card background
-- Avoid white anywhere on this page — stay strictly within the four-color system
+Identical to the landing page:
+- `bg-[url('/images/backgroundforlogin.jpg')] bg-center bg-cover min-h-screen`
+- Animated gradient overlay: `bg-gradient-to-br from-forest/60 via-fern/30 to-parchment/20 animate-pulse`
+- 4 floating orbs with staggered `animate-bounce` delays
+- All absolute-positioned behind the card (`z-0`)
+
+---
+
+#### Page Header
+
+Top-left logo outside the card, `relative z-10 p-6`:
+- `"BadrLink"` — gradient text `from-parchment to-sage`, display font, links to `/`
+
+---
+
+#### Centered Card
+
+`relative z-10`, centered with `flex items-center justify-center min-h-screen`:
+
+**Card container:**
+- `bg-gradient-to-br from-forest/80 to-[#1A3A20]/90 backdrop-blur-xl`
+- `border border-sage/20 rounded-3xl shadow-2xl`
+- `hover:scale-[1.01] hover:shadow-[0_8px_60px_rgba(95,141,78,0.2)] transition-all duration-500`
+- `max-w-lg w-full p-8 sm:p-10`
+
+**Icon avatar (top center):**
+- `w-20 h-20 rounded-full bg-gradient-to-br from-fern to-forest animate-pulse mx-auto mb-6`
+- SVG user icon (login) or user-plus icon (register) in parchment color
+
+**Heading:**
+- Login: `"Welcome Back"` / Register: `"Create Your Account"`
+- `text-3xl sm:text-4xl font-bold text-center uppercase tracking-widest`
+- Gradient text: `bg-gradient-to-r from-parchment via-sage to-parchment bg-clip-text text-transparent`
+- `animate-fade-in`
+
+**Subline:**
+- Login: `"Good to see you again."` / Register: `"Join and start chatting."`
+- `text-sage/80 text-sm tracking-wide text-center mb-6`
+
+**Error banner** (conditional on `error` state):
+- `bg-gradient-to-r from-red-900/30 to-red-700/20 border border-red-400/30 text-red-200 rounded-xl p-3 animate-shake`
+- SVG warning icon inline
+
+**Success banner** (conditional on `success` state):
+- `bg-gradient-to-r from-fern/30 to-sage/20 border border-sage/30 text-parchment rounded-xl p-3 animate-pulse`
+- SVG check icon inline
+
+**Input fields — shared styling:**
+- Container: `relative group`
+- Hover glow layer: absolute inset `bg-gradient-to-r from-fern/20 to-sage/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`
+- Input: `w-full bg-forest/40 border border-sage/20 text-parchment placeholder-sage/50 rounded-2xl focus:ring-2 focus:ring-fern/50 focus:border-fern/50 transition-all duration-300 hover:bg-forest/50`
+- Leading icon: `absolute left-4 top-1/2 translate-y-[3px] text-sage/60` SVG
+- Eye-toggle (password): `absolute right-4 top-1/2 translate-y-[3px] text-sage/60 hover:text-parchment/80`
+
+**Login fields:**
+- `h-14` — Username or Email (`👤` icon)
+- `h-14` — Password (`🔒` icon) + eye toggle
+
+**Register fields:**
+- `grid grid-cols-2 gap-4` row: Display Name (`👤`, `h-12`) + Username (`@`, `h-12`)
+- `h-14` — Email address (`✉` icon)
+- `h-14` — Password (`🔒`) + eye toggle
+- `h-14` — Confirm Password (`🔐`) + eye toggle
+- Password strength bar: 4 segments `h-1 rounded-full bg-forest/40`, fill with `bg-gradient-to-r from-fern to-sage` progressively. Label text `text-xs text-sage` — "Weak" / "Fair" / "Strong" / "Excellent"
+
+**CTA Button:**
+- `group relative w-full h-14 bg-gradient-to-r from-fern via-sage to-fern text-parchment font-semibold rounded-2xl overflow-hidden`
+- `hover:from-fern-dark hover:via-fern hover:to-sage-muted transition-all duration-300`
+- `shadow-lg hover:shadow-fern/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]`
+- Shimmer child: `absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`
+- Loading: spinner SVG + `"Signing In..."` / `"Creating Account..."`
+- Arrow icon `group-hover:translate-x-1 transition-transform`
+
+**Footer toggle:**
+- Login: `"Don't have an account?"` + `"Sign Up →"` sage link
+- Register: `"Already have an account?"` + `"Sign In →"` sage link
+- `text-sage font-semibold hover:text-parchment underline underline-offset-2 hover:underline-offset-4 transition-all`
+
+**All form state via React `useState`. No `<form>` tag — use `onClick` async handler. Disable all inputs + button while loading.**
 
 ---
 
 ### Page 3 — Messaging App (`/app`)
 
-The core experience. Three-pane layout on desktop, drawer/modal navigation on mobile.
+The authenticated core experience. Full gradient treatment throughout — no plain colors anywhere. The three-pane layout uses the co-dominant forest/parchment split: sidebar is forest-dominant, chat pane is parchment-dominant.
 
-**Layout:**
+---
+
+#### Layout
+
+**Desktop:**
 ```
-Desktop:
-┌────────────────┬────────────────────────────┬──────────────┐
-│  Sidebar       │  Chat Pane                 │  Detail Pane │
-│  (convos list) │  (messages + input)        │  (optional)  │
-└────────────────┴────────────────────────────┴──────────────┘
-
-Mobile:
-- Sidebar = full screen (conversation list)
-- Tap conversation → slide to full-screen chat pane
-- Detail pane = bottom sheet or separate screen
+┌────────────────────┬───────────────────────────────┐
+│  SIDEBAR           │  CHAT PANE                    │
+│  bg-gradient-to-b  │  bg-gradient-to-br            │
+│  from-forest-deep  │  from-parchment to-parchment  │
+│  to-forest         │  -dim                         │
+│                    │                               │
+│  [BadrLink logo]   │  [Chat header]                │
+│  [Search bar]      │  [Message list — scrollable]  │
+│  [New convo btn]   │  [Message input bar]          │
+│  [Conversation     │                               │
+│   list items]      │                               │
+└────────────────────┴───────────────────────────────┘
 ```
 
-**Sidebar features:**
-- Search bar (filter conversations by name)
-- Conversation list with skeleton loading
-- New conversation button (opens modal: choose PRIVATE or GROUP)
-- Active conversation highlighted
-- Show participant names and last message preview (if available)
+**Mobile:**
+- Sidebar = full-screen conversation list (slide to chat pane on tap)
+- Chat pane = full-screen message view with back arrow
+- Transition: horizontal slide (`translateX`) between views
 
-**Chat pane features:**
-- Message list with infinite scroll (load older messages on scroll up)
-- Skeleton placeholders while loading
-- Message bubbles: distinguish sent vs received
-- Timestamps on messages
-- Auto-scroll to bottom on new message
-- Message input: textarea + send button (support Enter to send, Shift+Enter for newline)
-- Show conversation name / participants in header
+---
 
-**Real-time:**
-- Subscribe to `/topic/conversations/{conversationId}` on open
-- Append incoming `MessageDTO` to message list in real-time
-- Subscribe to `/topic/conversations` for new conversation notifications
-- Subscribe to `/user/queue/errors` on connect → show toast on error
+#### Sidebar
 
-**Error/feedback:**
-- Toast notifications for WebSocket errors
-- Retry with backoff on 429 responses (check `Retry-After` header)
-- Empty states: "No conversations yet", "Say something..."
+- Background: `bg-gradient-to-b from-[#1A3A20] to-forest` — never a flat color
+- Width: `w-72 lg:w-80 flex-shrink-0`
+- `border-r border-sage/10`
+
+**Logo / App Header:**
+- `"BadrLink"` gradient text `from-parchment to-sage`, display font
+- Below: logged-in username in `text-sage/70 text-sm`
+- Padding: `px-5 py-5 border-b border-parchment/10`
+
+**Search Bar:**
+- `bg-gradient-to-r from-forest-surface/60 to-fern/20 border border-sage/15 rounded-xl`
+- `text-parchment placeholder-sage/50 text-sm px-4 py-2`
+- Search icon left: `text-sage/60`
+- Focus: `ring-1 ring-fern/40`
+- `mx-4 my-3`
+
+**New Conversation Button:**
+- `bg-gradient-to-r from-fern to-sage text-parchment rounded-xl px-4 py-2 text-sm font-medium`
+- `hover:scale-[1.02] hover:shadow-md hover:shadow-fern/20 active:scale-[0.98] transition-all`
+- `+ New Chat` with a plus icon
+- `mx-4 mb-3`
+
+**Conversation List Items:**
+- Each item: `flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200`
+- Default bg: transparent
+- Hover: `bg-gradient-to-r from-parchment/8 to-sage/5`
+- Active: `bg-gradient-to-r from-parchment/15 to-sage/10 border-l-2 border-fern`
+- Avatar: `w-10 h-10 rounded-full bg-gradient-to-br from-sage to-fern` (or from-fern to-forest for variety) — initials inside in parchment text
+- Name: `text-parchment text-sm font-medium`
+- Last message preview: `text-sage/60 text-xs truncate`
+- Timestamp: `text-sage/50 text-xs ml-auto`
+- Online indicator dot: `w-2 h-2 rounded-full bg-gradient-to-br from-sage to-fern` (absolute, bottom-right of avatar)
+
+**Skeleton loading** (while fetching conversations):
+- Animated `bg-gradient-to-r from-forest/40 via-fern/20 to-forest/40 bg-[length:200%_100%] animate-shimmer` bars
+- Shimmer keyframe: `@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`
+
+---
+
+#### Chat Pane
+
+- Background: `bg-gradient-to-br from-parchment to-parchment-dim` — warm, light, legible
+- Flex column: header → message list (flex-1 overflow-y-auto) → input bar
+
+**Chat Header:**
+- `bg-gradient-to-r from-parchment-dim to-parchment border-b border-forest/15`
+- `px-6 py-4 flex items-center gap-3`
+- Avatar: `w-10 h-10 rounded-full bg-gradient-to-br from-fern to-forest`
+- Conversation name: `text-forest text-base font-semibold` (display font)
+- Participants / subtitle: `text-fern/70 text-xs`
+- Online status dot (if applicable): `bg-gradient-to-br from-sage to-fern`
+
+**Message List:**
+- `flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-3`
+- Scroll to bottom on new message (smooth)
+- Infinite scroll upward for history
+
+**Message Bubbles:**
+
+Sent (current user):
+- Align right: `flex justify-end`
+- Bubble: `bg-gradient-to-br from-fern to-forest text-parchment rounded-2xl rounded-br-sm px-4 py-2 max-w-[70%] text-sm`
+- Timestamp: `text-parchment/50 text-[10px] mt-1 text-right`
+
+Received (other user):
+- Align left: `flex justify-start items-end gap-2`
+- Avatar: `w-7 h-7 rounded-full bg-gradient-to-br from-sage to-fern flex-shrink-0`
+- Bubble: `bg-gradient-to-br from-forest/15 to-fern/10 border border-forest/20 text-forest rounded-2xl rounded-bl-sm px-4 py-2 max-w-[70%] text-sm`
+- Timestamp: `text-forest/40 text-[10px] mt-1`
+
+**Skeleton messages** (while loading):
+- Alternating left/right shimmer bars using the same shimmer animation as sidebar
+
+**Empty state** (no conversation selected):
+- Centered in chat pane: `/app/texting_image.png` + `"Select a conversation to start chatting"` in `text-forest/40` italic display font
+- Illustration: `w-32 h-32 opacity-40`
+
+**Message Input Bar:**
+- `bg-gradient-to-r from-parchment-dim to-parchment border-t border-forest/10 px-4 py-4`
+- Textarea: `flex-1 bg-gradient-to-r from-forest/8 to-fern/5 border border-forest/15 rounded-2xl text-forest placeholder-forest/40 px-4 py-3 text-sm resize-none focus:ring-2 focus:ring-fern/30 focus:outline-none transition-all`
+- Placeholder: `"Type a message..."`
+- Send button: `bg-gradient-to-br from-fern to-forest text-parchment rounded-xl p-3 hover:scale-[1.05] hover:shadow-md hover:shadow-fern/30 active:scale-[0.95] transition-all`
+- Send icon SVG inside button
+- Enter to send, Shift+Enter for newline
+
+---
+
+#### New Conversation Modal
+
+Triggered by `"+ New Chat"` button:
+
+- Backdrop: `fixed inset-0 bg-forest/60 backdrop-blur-sm z-50`
+- Modal card: `bg-gradient-to-br from-forest to-forest-deep border border-sage/20 rounded-3xl p-6 max-w-sm w-full`
+- Heading: `"New Conversation"` — gradient text parchment→sage
+- Toggle: Private / Group — `bg-gradient-to-r from-fern/20 to-sage/10` active pill
+- Input: username field (same styling as auth inputs)
+- For Group: multi-select participant list + group name input
+- Confirm button: full gradient fern→sage CTA
+- Cancel: parchment/40 text link
+
+---
+
+#### Toast Notifications (WebSocket errors)
+
+- Fixed `bottom-6 right-6 z-50`
+- `bg-gradient-to-r from-forest/90 to-fern/70 backdrop-blur-sm border border-sage/20 text-parchment rounded-2xl px-5 py-3 shadow-xl`
+- Slide-up + fade-in animation on appear, slide-down + fade-out on dismiss
+- Auto-dismiss after 4 seconds
 
 ---
 

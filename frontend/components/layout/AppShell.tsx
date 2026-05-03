@@ -10,12 +10,12 @@ interface AppShellProps {
 export function AppShell({ sidebar, main, details }: AppShellProps) {
   return (
     <div className="flex h-full w-full">
-      <aside className="hidden h-full w-[320px] flex-shrink-0 border-r border-[var(--color-border)] bg-[rgba(26,58,32,0.8)] lg:block">
+      <aside className="hidden h-full w-72 flex-shrink-0 border-r border-[rgba(164,190,123,0.1)] bg-gradient-to-b from-[rgba(26,58,32,0.95)] to-[rgba(40,84,48,0.95)] lg:block">
         {sidebar}
       </aside>
-      <main className={cn("flex h-full flex-1 flex-col", details ? "lg:w-[calc(100%-320px-320px)]" : "")}>{main}</main>
+      <main className={cn("flex h-full flex-1 flex-col", details ? "lg:w-[calc(100%-288px-320px)]" : "")}>{main}</main>
       {details && (
-        <aside className="hidden h-full w-[320px] flex-shrink-0 border-l border-[var(--color-border)] bg-[rgba(26,58,32,0.8)] lg:block">
+        <aside className="hidden h-full w-80 flex-shrink-0 border-l border-[rgba(164,190,123,0.1)] bg-gradient-to-b from-[rgba(26,58,32,0.95)] to-[rgba(40,84,48,0.95)] lg:block">
           {details}
         </aside>
       )}

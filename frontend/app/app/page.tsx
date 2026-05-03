@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth";
 import { useConversations } from "../../hooks/useConversations";
@@ -13,7 +14,6 @@ import { ConversationItem } from "../../components/sidebar/ConversationItem";
 import { NewConversationModal } from "../../components/sidebar/NewConversationModal";
 import { MessageList } from "../../components/chat/MessageList";
 import { MessageInput } from "../../components/chat/MessageInput";
-import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../components/ui/Toast";
@@ -131,28 +131,39 @@ export default function MessagingApp() {
   }
 
   const sidebarContent = (
-    <div className="flex h-full flex-col p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-xl text-[var(--color-parchment)]">Conversations</h2>
-          <p className="text-xs text-[var(--color-text-muted)]">{auth.username}</p>
+    <div className="flex h-full flex-col">
+      <div className="border-b border-[rgba(229,217,182,0.1)] px-5 py-5">
+        <div className="font-display text-xl text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text">
+          BadrLink
         </div>
-        <Button variant="soft" onClick={() => setModalOpen(true)}>
-          + New
-        </Button>
+        <p className="text-xs text-[rgba(164,190,123,0.7)]">{auth.username}</p>
       </div>
-      <div className="mt-4">
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
+      <div className="px-4 pt-4">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search"
+          className="rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
+        />
       </div>
-      <div className="mt-4 flex-1 space-y-2 overflow-y-auto">
+      <div className="px-4 pt-3">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="w-full rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-sm font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(95,141,78,0.2)] active:scale-[0.98]"
+        >
+          + New Chat
+        </button>
+      </div>
+      <div className="mt-3 flex-1 space-y-1 overflow-y-auto px-2 pb-4">
         {loadingConversations && conversations.length === 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-2 px-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-16" />
+              <Skeleton key={i} className="h-14" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-sm text-[var(--color-text-muted)]">No conversations yet.</div>
+          <div className="px-3 text-sm text-[rgba(164,190,123,0.6)]">No conversations yet.</div>
         ) : (
           filtered.map((conversation) => (
             <ConversationItem
@@ -165,31 +176,45 @@ export default function MessagingApp() {
         )}
       </div>
       {nextCursor && (
-        <Button variant="ghost" onClick={() => loadMore()}>
+        <button
+          type="button"
+          onClick={() => loadMore()}
+          className="mx-4 mb-4 rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)] transition-all hover:bg-[rgba(229,217,182,0.08)]"
+        >
           Load more
-        </Button>
+        </button>
       )}
     </div>
   );
 
   const mainContent = (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-        <div>
-          <div className="font-display text-lg text-[var(--color-parchment)]">
-            {selected
-              ? selected.name || selected.participants.map((p) => p.displayName || p.username).join(", ")
-              : "Select a conversation"}
-          </div>
-          {selected && (
-            <div className="text-xs text-[var(--color-text-muted)]">
-              {selected.type === "GROUP" ? "Group chat" : "Private chat"}
+    <div className="flex h-full flex-col bg-gradient-to-br from-[rgba(229,217,182,0.95)] to-[rgba(212,200,158,0.9)]">
+      <header className="flex items-center justify-between border-b border-[rgba(40,84,48,0.15)] bg-gradient-to-r from-[rgba(212,200,158,0.9)] to-[rgba(229,217,182,0.95)] px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)]" />
+          <div>
+            <div className="font-display text-base text-[var(--color-forest)]">
+              {selected
+                ? selected.name || selected.participants.map((p) => p.displayName || p.username).join(", ")
+                : "Select a conversation"}
             </div>
-          )}
+            {selected && (
+              <div className="text-xs text-[rgba(95,141,78,0.7)]">
+                {selected.type === "GROUP" ? "Group chat" : "Private chat"}
+              </div>
+            )}
+          </div>
         </div>
-        <Button variant="ghost" onClick={() => { auth.logout(); router.push("/login"); }}>
+        <button
+          type="button"
+          onClick={() => {
+            auth.logout();
+            router.push("/login");
+          }}
+          className="rounded-xl border border-[rgba(40,84,48,0.2)] px-4 py-2 text-xs text-[rgba(40,84,48,0.7)] transition-all hover:bg-[rgba(40,84,48,0.08)]"
+        >
           Logout
-        </Button>
+        </button>
       </header>
 
       {selected ? (
@@ -204,8 +229,15 @@ export default function MessagingApp() {
           <MessageInput onSend={handleSend} />
         </>
       ) : (
-        <div className="flex flex-1 items-center justify-center text-sm text-[var(--color-text-muted)]">
-          Choose a conversation to begin.
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-sm text-[rgba(40,84,48,0.4)]">
+          <Image
+            src="/app/texting_image.png"
+            alt="Select a conversation"
+            width={128}
+            height={128}
+            className="h-32 w-32 opacity-40"
+          />
+          <span className="font-display italic">Select a conversation to start chatting.</span>
         </div>
       )}
     </div>
@@ -218,11 +250,15 @@ export default function MessagingApp() {
           <div className="h-full">{sidebarContent}</div>
         ) : (
           <div className="flex h-full flex-col">
-            <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">
-              <Button variant="ghost" onClick={() => setSelected(null)}>
+            <div className="flex items-center gap-3 border-b border-[rgba(40,84,48,0.15)] bg-gradient-to-r from-[rgba(212,200,158,0.9)] to-[rgba(229,217,182,0.95)] px-4 py-3">
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-xl border border-[rgba(40,84,48,0.2)] px-3 py-1 text-xs text-[rgba(40,84,48,0.7)]"
+              >
                 ← Back
-              </Button>
-              <div className="text-sm text-[var(--color-text-secondary)]">Conversation</div>
+              </button>
+              <div className="text-sm text-[rgba(40,84,48,0.7)]">Conversation</div>
             </div>
             {mainContent}
           </div>
@@ -235,9 +271,9 @@ export default function MessagingApp() {
           main={mainContent}
           details={
             <div className="flex h-full flex-col gap-4 p-4">
-              <div className="rounded-3xl border border-[var(--color-border)] bg-[rgba(40,84,48,0.5)] p-4">
+              <div className="rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(26,58,32,0.9)] to-[rgba(40,84,48,0.8)] p-4">
                 <h3 className="text-sm font-semibold text-[var(--color-parchment)]">Details</h3>
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                <p className="mt-2 text-xs text-[rgba(164,190,123,0.7)]">
                   Select a conversation to see participants and shared moments.
                 </p>
               </div>

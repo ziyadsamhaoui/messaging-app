@@ -37,8 +37,10 @@ public class SlidingWindowAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        // Only filter auth/login/register endpoints
-        return !(path.equals("/login") || path.equals("/register") || path.startsWith("/auth/"));
+        // Only filter auth/login/register endpoints (support both /auth/* and /api/auth/* prefixes)
+        return !(path.equals("/login") || path.equals("/register")
+                || path.equals("/api/login") || path.equals("/api/register")
+                || path.startsWith("/auth/") || path.startsWith("/api/auth/"));
     }
 
     @Override

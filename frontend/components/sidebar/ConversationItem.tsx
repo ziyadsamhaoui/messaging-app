@@ -18,10 +18,10 @@ export function ConversationItem({ conversation, active, onClick }: Conversation
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition",
+        "flex w-full items-center gap-3 px-4 py-3 text-left transition-all duration-200",
         active
-          ? "border-[var(--color-sage)] bg-[rgba(164,190,123,0.15)]"
-          : "hover:bg-[rgba(164,190,123,0.08)]"
+          ? "border-l-2 border-[var(--color-fern)] bg-gradient-to-r from-[rgba(229,217,182,0.15)] to-[rgba(164,190,123,0.1)]"
+          : "hover:bg-gradient-to-r hover:from-[rgba(229,217,182,0.08)] hover:to-[rgba(164,190,123,0.05)]"
       )}
     >
       <Avatar name={title || "Conversation"} />

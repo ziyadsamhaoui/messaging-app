@@ -4,19 +4,24 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
 import { login, register, ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "../../components/ui/Toast";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -30,21 +35,38 @@ export default function LoginPage() {
     return score;
   }, [password]);
 
-  const strengthLabel = ["Weak", "Fair", "Strong", "Strong"][strengthScore] || "Weak";
+  // label mapping: index 1..4 -> Weak..Excellent, index 0 = empty (no label)
+  const strengthLabels = ["", "Weak", "Fair", "Strong", "Excellent"];
+  const strengthLabel = strengthScore > 0 ? strengthLabels[strengthScore] : "";
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // native-like strength colors for the 4 segments: red, orange, yellow, green
+  const strengthColors = ["bg-red-500", "bg-orange-400", "bg-yellow-400", "bg-green-500"];
+
+  async function handleSubmit() {
     setError(null);
-    if (mode === "register" && password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+    setSuccess(null);
+    if (mode === "register") {
+      if (!displayName.trim() || !username.trim() || !email.trim()) {
+        setError("Please complete all required fields.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      const res = mode === "login"
+        const res = mode === "login"
         ? await login(username, password)
-        : await register(username, password);
+        : await register({
+            username,
+            password,
+            displayName,
+            email,
+          });
+      setSuccess(mode === "login" ? "Welcome back." : "Account created. Welcome in.");
       auth.login(res.token, res.username, res.userId);
       toast.push("Welcome to the canopy.", "success");
       router.push("/app");
@@ -60,106 +82,271 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-parchment)] text-[var(--color-forest)]">
-      <div className="px-6 py-6">
-        <Link href="/" className="font-display text-lg text-[var(--color-forest)]">
-          Verdant Messages
-        </Link>
-      </div>
-
-      <div className="mx-auto flex min-h-[calc(100vh-96px)] w-full max-w-5xl items-center justify-center px-6 pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md rounded-2xl border border-[rgba(40,84,48,0.2)] bg-[var(--color-forest)] p-8 text-[var(--color-parchment)] shadow-[0_8px_40px_rgba(40,84,48,0.25)]"
-        >
-          <div className="space-y-2">
-            <h1 className="font-display text-3xl">
-              {mode === "login" ? "Welcome Back" : "Create Your Account"}
-            </h1>
-            <p className="text-sm text-[var(--color-sage)]">
-              {mode === "login" ? "Good to see you again." : "Join and start chatting."}
-            </p>
-            <div className="h-px w-full bg-[rgba(164,190,123,0.35)]" />
-          </div>
-
-          <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-            <div className="relative">
-              <Input
-                label="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="forestwalker"
-                required
-                className="bg-[var(--color-input-dark)] pr-10"
+    <div className="relative min-h-screen overflow-auto bg-cover bg-center text-[var(--color-parchment)]">
+      {/* Nav bar - parchment gradient as requested */}
+      <nav className="w-full h-17 bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] border-b border-[rgba(40,84,48,0.06)] py-3 px-6 shadow-sm z-20">
+        <div className="max-w-7xl mx-auto flex items-center">
+              <Image
+                src={"/frontend/public/favicon.png"}
+                width={20}
+                height={20}
+                alt="BadrLink favicon"
+                className="w-auto h-auto"
+                style={{ width: "auto", height: "auto" }}
               />
-              <span className="pointer-events-none absolute right-4 top-10 text-[var(--color-sage)]">👤</span>
-            </div>
-            <div className="relative">
-              <Input
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="bg-[var(--color-input-dark)] pr-10"
-              />
-              <span className="pointer-events-none absolute right-4 top-10 text-[var(--color-sage)]">👁</span>
-            </div>
+          <Link href="/" className="font-display text-lg font-bold text-[var(--color-forest)]">
+            BadrLink
+          </Link>
+        </div>
+      </nav>
 
-            {mode === "register" && (
-              <>
-                <Input
-                  label="Confirm password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-[var(--color-input-dark)]"
-                />
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-[var(--color-sage)]">
-                    <span>Password strength</span>
-                    <span>{strengthLabel}</span>
+       <div className="absolute inset-0 bg-gradient-to-br from-[rgba(40,84,48,0.6)] via-[rgba(95,141,78,0.3)] to-[rgba(229,217,182,0.2)] animate-pulse" />
+
+      <div className="relative z-10 flex min-h-screen sm:py-10 flex-col px-4">
+        {/* spacer to visually separate from nav when not fixed */}
+        <div className="" />
+
+         <div className="mt-8 md:mt-0 flex flex-1 flex-col items-center justify-center">
+
+             <motion.div
+               initial={{ opacity: 0, y: 18 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="relative z-10 w-full max-w-lg md:max-w-2xl lg:max-w-4xl rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(26,58,32,0.9)] p-8 text-[var(--color-parchment)] shadow-2xl backdrop-blur-xl transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_8px_60px_rgba(95,141,78,0.2)] sm:p-10"
+             >
+               <div className="mx-auto mb-6 flex h-17 w-17 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] animate-pulse">
+                 <svg
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   strokeWidth="1.5"
+                   className="h-8 w-8 text-[var(--color-parchment)]"
+                 >
+                   {mode === "login" ? (
+                     <path
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"
+                     />
+                   ) : (
+                     <path
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       d="M18 7.5V12m0 0V16.5m0-4.5h4.5m-4.5 0H13.5M6 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM3 20.25a6.75 6.75 0 0 1 13.5 0"
+                     />
+                   )}
+                 </svg>
+               </div>
+
+               <div className="text-center">
+                 <h1 className="font-display text-xl uppercase tracking-widest text-transparent bg-gradient-to-r from-[var(--color-parchment)] via-[var(--color-sage)] to-[var(--color-parchment)] bg-clip-text sm:text-4xl animate-fade-in">
+                   {mode === "login" ? "Welcome Back" : "Create Your Account"}
+                 </h1>
+                 <p className="mt-2 text-sm text-[rgba(164,190,123,0.8)] tracking-wide">
+                   {mode === "login" ? "Good to see you again." : "Join and start chatting."}
+                 </p>
+                 <div className="mt-4 h-px w-full bg-[rgba(164,190,123,0.3)]" />
+               </div>
+
+               {error && (
+                 <div className="mt-6 flex items-center gap-3 rounded-xl border border-red-400/30 bg-gradient-to-r from-red-900/30 to-red-700/20 p-3 text-sm text-red-200 animate-shake">
+                   <span>⚠</span>
+                   <span>{error}</span>
+                 </div>
+               )}
+
+               {success && (
+                 <div className="mt-6 flex items-center gap-3 rounded-xl border border-[rgba(164,190,123,0.3)] bg-gradient-to-r from-[rgba(95,141,78,0.3)] to-[rgba(164,190,123,0.2)] p-3 text-sm text-[var(--color-parchment)] animate-pulse">
+                   <span>✓</span>
+                   <span>{success}</span>
+                 </div>
+               )}
+
+              <div className="mt-6 flex flex-col gap-4">
+                {mode === "register" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Display name (col 1, row 1) */}
+                    <div className="md:col-start-1">
+                      <div className="relative group">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300 " />
+                        <Input
+                          label="Display name"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Ziyad"
+                          disabled={loading}
+                          className="relative h-12 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11"
+                        />
+                        <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">👤</span>
+                      </div>
+                    </div>
+
+                    {/* Email spans cols 1-2 under display name (row 2) */}
+                    <div className="md:col-start-1 md:row-start-2 md:col-span-2 mt-2">
+                        <div className="relative group">
+                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                            <Input
+                                label="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="ziyadsamhaoui@example.com"
+                                disabled={loading}
+                                className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11"
+                            />
+                            <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">✉</span>
+                        </div>
+                    </div>
+
+                    {/* Username sits top-right (col 2 on md) */}
+                    <div className="md:col-start-2">
+                      <div className="relative group">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                        <Input
+                          label="Username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          placeholder="ziyadsamhaoui"
+                          disabled={loading}
+                          className="relative h-12 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11"
+                        />
+                        <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">@</span>
+                      </div>
+                    </div>
+
+                    {/* Passwords positioned in the right column at row 1 (col 3 row 1) */}
+                    <div className="md:col-start-3 md:row-span-3 space-y-4">
+                      <div className="relative group">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                        <Input
+                          label="Password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          disabled={loading}
+                          className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11 pr-12"
+                        />
+                        <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">🔒</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute text-xl right-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)] hover:text-[var(--color-parchment)]"
+                          aria-label="Toggle password visibility"
+                        >
+                          👁
+                        </button>
+                      </div>
+
+                      <div className="relative group">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                        <Input
+                          label="Confirm Password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          disabled={loading}
+                          className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11 pr-12"
+                        />
+                        <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">🔐</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          className="absolute text-xl right-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)] hover:text-[var(--color-parchment)]"
+                          aria-label="Toggle confirm password visibility"
+                        >
+                          👁
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-[var(--color-sage)]">
+                          <span>Password strength</span>
+                          {/* only show descriptor when a value exists */}
+                          {strengthScore > 0 && <span>{strengthLabel}</span>}
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 rounded-full ${
+                                i < strengthScore ? strengthColors[i] : "bg-[rgba(229,217,182,0.25)]"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`h-2 rounded-full ${
-                          i < strengthScore
-                            ? i >= 2
-                              ? "bg-[var(--color-fern-dark)]"
-                              : "bg-[var(--color-sage)]"
-                            : "bg-[rgba(229,217,182,0.25)]"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                 ) : (
+                   <>
+                     <div className="relative group">
+                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                       <Input
+                         label={mode === "login" ? "Username or Email" : "Email address"}
+                         value={mode === "login" ? username : email}
+                         onChange={(e) => (mode === "login" ? setUsername(e.target.value) : setEmail(e.target.value))}
+                         placeholder={mode === "login" ? "forestwalker" : "ziyadsamhaoui@example.com"}
+                         disabled={loading}
+                         className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11"
+                       />
+                      <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">✉</span>
+                     </div>
+
+                     <div className="relative group">
+                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.2)] opacity-0 transition-opacity duration-300" />
+                       <Input
+                         label="Password"
+                         type={showPassword ? "text" : "password"}
+                         value={password}
+                         onChange={(e) => setPassword(e.target.value)}
+                         placeholder="••••••••"
+                         disabled={loading}
+                         className="relative h-14 bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pl-11 pr-12"
+                       />
+                       <span className="pointer-events-none absolute left-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)]">🔒</span>
+                       <button
+                         type="button"
+                         onClick={() => setShowPassword((prev) => !prev)}
+                         className="absolute text-xl right-4 top-1/2 translate-y-[3px] text-[rgba(164,190,123,0.6)] hover:text-[var(--color-parchment)]"
+                         aria-label="Toggle password visibility"
+                       >
+                         👁
+                       </button>
+                     </div>
+                   </>
+                 )}
+
+                 <button
+                   type="button"
+                   onClick={handleSubmit}
+                   disabled={loading}
+                   className="group relative mt-2 flex cursor-pointer h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-fern)] text-[var(--color-parchment)] font-semibold shadow-lg transition-all duration-300 hover:shadow-[0_12px_40px_rgba(95,141,78,0.25)] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                 >
+                   <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-white/0 via-white/10 to-white/0 transition-transform duration-1000 group-hover:translate-x-[100%]" />
+                   <span className="relative flex items-center gap-2">
+                     {loading ? (mode === "login" ? "Signing in..." : "Creating account...") : (mode === "login" ? "Sign In" : "Create Account")}
+                     <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                   </span>
+                 </button>
+               </div>
+                
+                <div className="mt-6 text-center text-xs text-[var(--color-parchment-dim)]">
+                  {mode === "login" ? "Don't have an account?" : "Already have an account?"} {" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode(mode === "login" ? "register" : "login");
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className="text-[var(--color-sage)] font-semibold underline underline-offset-2 transition-all hover:text-[var(--color-parchment)] hover:underline-offset-4 cursor-pointer"
+                  >
+                    {mode === "login" ? "Sign Up" : "Sign In"} →
+                  </button>
                 </div>
-              </>
-            )}
-
-            {error && <div className="text-sm text-[var(--color-error)]">{error}</div>}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Please wait…" : mode === "login" ? "Log In" : "Sign Up"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-xs text-[var(--color-parchment-dim)]">
-            {mode === "login" ? "Don't have an account?" : "Already have one?"} {" "}
-            <button
-              type="button"
-              onClick={() => setMode(mode === "login" ? "register" : "login")}
-              className="text-[var(--color-sage)]"
-            >
-              {mode === "login" ? "Create one →" : "Log in →"}
-            </button>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-}
+        </div>
+    );
+  }

@@ -36,7 +36,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/ws", "/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
-                .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/auth/**", "/login", "/register", "/h2-console/**").permitAll()
+                .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/auth/**", "/api/auth/**", "/login", "/register", "/api/login", "/api/register", "/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
             ;

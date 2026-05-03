@@ -12,7 +12,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
   return (
     <div
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(164,190,123,0.25)] text-xs font-semibold text-[var(--color-parchment)]",
+        "flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-sage)] to-[var(--color-fern)] text-xs font-semibold text-[var(--color-parchment)]",
         className
       )}
     >

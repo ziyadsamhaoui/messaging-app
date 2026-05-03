@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Cormorant_Garamond, Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../lib/auth";
 import { ToastProvider } from "../components/ui/Toast";
 
-const displayFont = Fraunces({
+const displayFont = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "600", "700"],
 });
 
-const bodyFont = IBM_Plex_Sans({
+const bodyFont = Newsreader({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
@@ -23,8 +23,8 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Verdant Messages",
-  description: "A real-time messaging app with a botanical soul.",
+  title: "BadrLink",
+  description: "Real-time messaging, rooted in calm.",
 };
 
 export default function RootLayout({

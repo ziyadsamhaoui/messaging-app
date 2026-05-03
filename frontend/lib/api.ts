@@ -1,15 +1,17 @@
-import { ErrorResponse, ConversationPageDTO, ConversationDTO, CreateConversationRequest, MessageDTO, MessagePageDTO, LoginResponse } from "./types";
+import { ErrorResponse, ConversationPageDTO, ConversationDTO, CreateConversationRequest, MessageDTO, MessagePageDTO, LoginResponse, RegisterRequest } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 export class ApiError extends Error {
   status: number;
   payload?: ErrorResponse;
+  retryAfterSeconds?: number;
 
-  constructor(message: string, status: number, payload?: ErrorResponse) {
+  constructor(message: string, status: number, payload?: ErrorResponse, retryAfterSeconds?: number) {
     super(message);
     this.status = status;
     this.payload = payload;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -33,23 +35,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const payload = await parseError(res);
     const message = payload?.message || `Request failed with status ${res.status}`;
-    throw new ApiError(message, res.status, payload || undefined);
+    const retryAfterHeader = res.headers.get("Retry-After");
+    const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined;
+    throw new ApiError(message, res.status, payload || undefined, Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : undefined);
   }
 
   return (await res.json()) as T;
 }
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
-  return request<LoginResponse>("/api/auth/login", {
+  return request<LoginResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
 }
 
-export async function register(username: string, password: string): Promise<LoginResponse> {
-  return request<LoginResponse>("/api/auth/register", {
+export async function register(payload: RegisterRequest): Promise<LoginResponse> {
+  return request<LoginResponse>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -57,13 +61,13 @@ export async function getConversations(token: string, cursor?: number | null, li
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", String(cursor));
   params.set("limit", String(limit));
-  return request<ConversationPageDTO>(`/api/conversations?${params.toString()}`, {
+  return request<ConversationPageDTO>(`/conversations?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export async function createConversation(token: string, body: CreateConversationRequest) {
-  return request<ConversationDTO>("/api/conversations", {
+  return request<ConversationDTO>("/conversations", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -74,13 +78,13 @@ export async function getMessages(token: string, conversationId: number, cursor?
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", String(cursor));
   params.set("limit", String(limit));
-  return request<MessagePageDTO>(`/api/conversations/${conversationId}/messages?${params.toString()}`, {
+  return request<MessagePageDTO>(`/conversations/${conversationId}/messages?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export async function sendMessage(token: string, conversationId: number, content: string) {
-  return request<MessageDTO>(`/api/conversations/${conversationId}/messages`, {
+  return request<MessageDTO>(`/conversations/${conversationId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ content }),

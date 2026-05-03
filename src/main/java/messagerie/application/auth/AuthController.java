@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping({"/auth", "/api/auth"})
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -42,7 +42,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
+            // keep consistent JSON error responses across the API
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new messagerie.application.dto.ErrorResponse(HttpStatus.CONFLICT.value(), "Conflict", "Username already exists", "/register", "username_conflict"));
         }
 
         UserEntity user = new UserEntity();
@@ -61,10 +63,11 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
         if (!auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new messagerie.application.dto.ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized", "Invalid username or password", "/login", "auth_failed"));
         }
 
-        UserEntity user = userRepository.findByUsername(req.getUsername()).get();
+        UserEntity user = userRepository.findByUsername(req.getUsername()).orElseThrow(() -> new messagerie.application.exception.NotFoundException("User not found"));
         String token = jwtService.generateToken(user.getUsername(), user.getUserId());
         return ResponseEntity.ok(new AuthResponse(token, user.getUserId(), user.getUsername()));
     }

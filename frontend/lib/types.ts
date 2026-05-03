@@ -50,6 +50,13 @@ export interface CreateConversationRequest {
   name?: string;
 }
 
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  displayName?: string;
+  email?: string;
+}
+
 export interface LoginResponse {
   token: string;
   username: string;
