@@ -2,7 +2,9 @@
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Client, IMessage } from "@stomp/stompjs";
 import { useAuth } from "../../lib/auth";
 import { useConversations } from "../../hooks/useConversations";
 import { useMessages } from "../../hooks/useMessages";
@@ -30,6 +32,7 @@ export default function MessagingApp() {
   const [settingsDisplayName, setSettingsDisplayName] = useState(auth.username || "");
   const [settingsEmail, setSettingsEmail] = useState("");
   const [settingsPassword, setSettingsPassword] = useState("");
+  const [settingsPasswordConfirm, setSettingsPasswordConfirm] = useState("");
   const [settingsAvatarName, setSettingsAvatarName] = useState("");
   const [userResults, setUserResults] = useState<UserDTO[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -54,11 +57,12 @@ export default function MessagingApp() {
     [setItems]
   );
 
-  const { subscribe } = useStomp({
-    token: auth.token,
-    onError: (msg) => toast.push(msg, "error"),
-    onConnect: (client) => {
-      client.subscribe("/user/queue/errors", (message) => {
+  // Stable onConnect handler: subscribe to global topics here. Per-conversation subscriptions
+  // are handled in the separate useEffect below to avoid recreating the STOMP client
+  // whenever `selected` changes (which was causing re-initialization loops).
+  const handleStompConnect = useCallback(
+    (client: Client) => {
+      client.subscribe("/user/queue/errors", (message: IMessage) => {
         try {
           const payload = JSON.parse(message.body);
           toast.push(payload.message || "An error occurred", payload.status === 200 ? "success" : "error");
@@ -71,7 +75,7 @@ export default function MessagingApp() {
         }
       });
 
-      client.subscribe("/topic/conversations", (message) => {
+      client.subscribe("/topic/conversations", (message: IMessage) => {
         try {
           const convo = JSON.parse(message.body) as ConversationDTO;
           setItems((prev) => {
@@ -82,15 +86,14 @@ export default function MessagingApp() {
           // ignore parse errors
         }
       });
-
-      if (selected?.conversationId) {
-        client.subscribe(`/topic/conversations/${selected.conversationId}`, (message) => {
-          const msg = JSON.parse(message.body) as MessageDTO;
-          appendMessage(msg);
-          updateConversationLastMessage(selected.conversationId, msg);
-        });
-      }
     },
+    [auth, router, setItems, toast]
+  );
+
+  const { subscribe } = useStomp({
+    token: auth.token,
+    onError: (msg) => toast.push(msg, "error"),
+    onConnect: handleStompConnect,
   });
 
   useEffect(() => {
@@ -159,6 +162,7 @@ export default function MessagingApp() {
 
   const currentUsername = auth.username || "username";
   const currentDisplayName = currentUsername;
+  const currentEmailPlaceholder = currentUsername.includes("@") ? currentUsername : "you@example.com";
   const currentInitial = currentDisplayName.charAt(0).toUpperCase();
   const selectedParticipant = selected?.participants.find((p) => p.userId !== auth.userId) ?? selected?.participants[0];
   const selectedDisplayName = selected?.name || selectedParticipant?.displayName || selectedParticipant?.username || "Conversation";
@@ -204,7 +208,7 @@ export default function MessagingApp() {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="border-b border-[rgba(229,217,182,0.1)] px-5 py-3">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <Image
             src="/favicon.png"
             width={60}
@@ -215,7 +219,7 @@ export default function MessagingApp() {
           <div className="font-display text-4xl text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text">
             BadrLink
           </div>
-        </div>
+        </Link>
       </div>
       <div className="px-4 pt-6">
         <div className="relative">
@@ -314,16 +318,9 @@ export default function MessagingApp() {
             className="flex h-9 w-9 items-center justify-center rounded-md bg-transparent text-[var(--color-forest)] transition-transform duration-300 hover:rotate-90"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 text-[var(--color-forest)]">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 4.27 16.9l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09c.7 0 1.29-.4 1.51-1A1.65 1.65 0 0 0 4.27 6.1l-.06-.06A2 2 0 0 1 7.04 3.2l.06.06c.5.5 1.14.8 1.82.33.5-.35 1.11-.55 1.82-.55H12c.71 0 1.32.2 1.82.55.68.47 1.31.17 1.82-.33l.06-.06A2 2 0 0 1 19.73 7.1l-.06.06c-.22.6-.81 1-1.51 1H17a1.65 1.65 0 0 0-1.51 1c-.2.65-.2 1.36 0 2 .2.6.81 1 1.51 1h.09c.7 0 1.29.4 1.51 1z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.75a3.25 3.25 0 0 0-3.25 3.25v5a3.25 3.25 0 1 0 6.5 0v-5A3.25 3.25 0 0 0 12 2.75Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.75 11.5v.5a6.25 6.25 0 0 0 12.5 0v-.5" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.25v2.5" />
             </svg>
           </button>
         </div>
@@ -405,7 +402,7 @@ export default function MessagingApp() {
       <NewConversationModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreate} />
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-3 text-center">
             <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-xl font-semibold text-[var(--color-parchment)]">
               {currentInitial}
               <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[rgba(229,217,182,0.3)] bg-[rgba(40,84,48,0.9)]">
@@ -435,7 +432,7 @@ export default function MessagingApp() {
             label="Email"
             value={settingsEmail}
             onChange={(e) => setSettingsEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={currentEmailPlaceholder}
             className="bg-[rgba(26,58,32,0.6)]"
           />
           <Input
@@ -443,6 +440,14 @@ export default function MessagingApp() {
             type="password"
             value={settingsPassword}
             onChange={(e) => setSettingsPassword(e.target.value)}
+            placeholder="••••••••"
+            className="bg-[rgba(26,58,32,0.6)]"
+          />
+          <Input
+            label="Confirm password"
+            type="password"
+            value={settingsPasswordConfirm}
+            onChange={(e) => setSettingsPasswordConfirm(e.target.value)}
             placeholder="••••••••"
             className="bg-[rgba(26,58,32,0.6)]"
           />

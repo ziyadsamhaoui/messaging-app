@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
 import { createStompClient } from "../lib/stomp";
 
@@ -31,15 +31,15 @@ export function useStomp({ token, onError, onConnect }: UseStompOptions) {
     };
   }, [token, onError, onConnect]);
 
-  function subscribe(destination: string, handler: (message: IMessage) => void) {
+  const subscribe = useCallback((destination: string, handler: (message: IMessage) => void) => {
     if (!clientRef.current || !clientRef.current.connected) return null;
     return clientRef.current.subscribe(destination, handler);
-  }
+  }, []);
 
-  function publish(destination: string, body: string) {
+  const publish = useCallback((destination: string, body: string) => {
     if (!clientRef.current || !clientRef.current.connected) return;
     clientRef.current.publish({ destination, body });
-  }
+  }, []);
 
   return { subscribe, publish };
 }

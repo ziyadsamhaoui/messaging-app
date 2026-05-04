@@ -112,25 +112,51 @@ export default function Home() {
 					</div>
 
 					<div className="relative flex items-center justify-center lg:translate-x-25">
-                        <Image
-                            src="/texting_image_new.png"
-                            alt="Texting illustration"
-                            width={240}
-                            height={240}
-                            className="h-75 w-75 object-contain drop-shadow-[0_8px_24px_rgba(95,141,78,0.3)] md:h-120 md:w-120 rounded-xl"
-                        />
-						<div className="pointer-events-none absolute left-0 top-3 rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float lg:left-5 lg:top-4 lg:translate-x-0">
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 0.9, delay: 0.2 }}
+						>
+							<Image
+								src="/texting_image_new.png"
+								alt="Texting illustration"
+								width={240}
+								height={240}
+								className="h-75 w-75 object-contain drop-shadow-[0_8px_24px_rgba(95,141,78,0.3)] md:h-120 md:w-120 rounded-xl"
+							/>
+						</motion.div>
+						<motion.div
+							initial={{ opacity: 0, x: -28 }}
+							animate={{ opacity: 1, x: 0 }}
+							transition={{ duration: 0.7, delay: 0.2 }}
+							className="pointer-events-none absolute left-0 top-3 rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float lg:left-5 lg:top-4 lg:translate-x-0"
+						>
 							<span className="text-xl">A: You still up?</span>
-						</div>
-						<div className="pointer-events-none absolute right-0 top-20 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float-slow lg:left-auto lg:-right-20 lg:top-20 lg:translate-x-0">
-                            <span className="text-xl">B: Yeah, can&apos;t sleep</span>
-						</div>
-						<div className="pointer-events-none absolute right-0 top-60 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float lg:left-auto lg:-right-20 lg:bottom-0 lg:top-auto lg:translate-x-0">
+						</motion.div>
+						<motion.div
+							initial={{ opacity: 0, x: 28 }}
+							animate={{ opacity: 1, x: 0 }}
+							transition={{ duration: 0.7, delay: 0.3 }}
+							className="pointer-events-none absolute right-0 top-20 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float-slow lg:left-auto lg:-right-20 lg:top-20 lg:translate-x-0"
+						>
+							<span className="text-xl">B: Yeah, can&apos;t sleep</span>
+						</motion.div>
+						<motion.div
+							initial={{ opacity: 0, x: 28 }}
+							animate={{ opacity: 1, x: 0 }}
+							transition={{ duration: 0.7, delay: 0.45 }}
+							className="pointer-events-none absolute right-0 top-60 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float lg:left-auto lg:-right-20 lg:bottom-0 lg:top-auto lg:translate-x-0"
+						>
 							<span className="text-xl">B: Always, what&apos;s on your mind?</span>
-						</div>
-						<div className="pointer-events-none absolute left-0 top-40  rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float-slow lg:left-5 lg:bottom-24 lg:top-auto lg:translate-x-0">
-                            <span className="text-xl">A: Same... wanna talk for a bit?</span>
-						</div>
+						</motion.div>
+						<motion.div
+							initial={{ opacity: 0, x: -28 }}
+							animate={{ opacity: 1, x: 0 }}
+							transition={{ duration: 0.7, delay: 0.35 }}
+							className="pointer-events-none absolute left-0 top-40  rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float-slow lg:left-5 lg:bottom-24 lg:top-auto lg:translate-x-0"
+						>
+							<span className="text-xl">A: Same... wanna talk for a bit?</span>
+						</motion.div>
 
 					</div>
 				</div>
