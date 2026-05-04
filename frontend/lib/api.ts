@@ -1,4 +1,4 @@
-import { ErrorResponse, ConversationPageDTO, ConversationDTO, CreateConversationRequest, MessageDTO, MessagePageDTO, LoginResponse, RegisterRequest } from "./types";
+import { ErrorResponse, ConversationPageDTO, ConversationDTO, CreateConversationRequest, MessageDTO, MessagePageDTO, LoginResponse, RegisterRequest, UserDTO } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -61,13 +61,13 @@ export async function getConversations(token: string, cursor?: number | null, li
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", String(cursor));
   params.set("limit", String(limit));
-  return request<ConversationPageDTO>(`/conversations?${params.toString()}`, {
+  return request<ConversationPageDTO>(`/api/conversations?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export async function createConversation(token: string, body: CreateConversationRequest) {
-  return request<ConversationDTO>("/conversations", {
+  return request<ConversationDTO>("/api/conversations", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -78,16 +78,23 @@ export async function getMessages(token: string, conversationId: number, cursor?
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", String(cursor));
   params.set("limit", String(limit));
-  return request<MessagePageDTO>(`/conversations/${conversationId}/messages?${params.toString()}`, {
+  return request<MessagePageDTO>(`/api/conversations/${conversationId}/messages?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export async function sendMessage(token: string, conversationId: number, content: string) {
-  return request<MessageDTO>(`/conversations/${conversationId}/messages`, {
+  return request<MessageDTO>(`/api/conversations/${conversationId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ content }),
+  });
+}
+
+export async function searchUsers(token: string, query: string) {
+  const params = new URLSearchParams({ query });
+  return request<UserDTO[]>(`/api/users/search?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
 

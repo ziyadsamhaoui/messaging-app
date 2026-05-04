@@ -5,14 +5,35 @@ import { cn } from "../../lib/utils";
 
 interface ConversationItemProps {
   conversation: ConversationDTO;
+  currentUserId?: number | null;
   active?: boolean;
   onClick: () => void;
 }
 
-export function ConversationItem({ conversation, active, onClick }: ConversationItemProps) {
+function formatTimestamp(iso?: string | null) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs > 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString();
+  }
+  const hours = String(date.getHours()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${hours}:${seconds}`;
+}
+
+export function ConversationItem({ conversation, currentUserId, active, onClick }: ConversationItemProps) {
+  const otherParticipant = conversation.participants.find((p) => p.userId !== currentUserId);
   const title =
-    conversation.name ||
-    conversation.participants.map((p) => p.displayName || p.username).join(", ");
+    conversation.type === "PRIVATE"
+      ? otherParticipant?.displayName || otherParticipant?.username || "Private chat"
+      : conversation.name || conversation.participants.map((p) => p.displayName || p.username).join(", ");
+
+  const lastMessage = conversation.lastMessage?.content || "No messages yet";
+  const lastMessageTime = formatTimestamp(conversation.lastMessage?.createdAt);
+  const subtitle = lastMessageTime ? `${lastMessage} • ${lastMessageTime}` : lastMessage;
 
   return (
     <button
@@ -29,11 +50,8 @@ export function ConversationItem({ conversation, active, onClick }: Conversation
         <div className="text-sm font-semibold text-[var(--color-parchment)] line-clamp-1">
           {title || "Untitled"}
         </div>
-        <div className="text-xs text-[var(--color-text-muted)]">
-          {conversation.type === "GROUP" ? "Group" : "Private"}
-        </div>
+        <div className="text-xs text-[var(--color-text-muted)] line-clamp-1">{subtitle}</div>
       </div>
     </button>
   );
 }
-

@@ -23,6 +23,7 @@ export interface ConversationDTO {
   name?: string | null;
   createdAt: string;
   participants: UserDTO[];
+  lastMessage?: MessageDTO | null;
 }
 
 export interface MessageDTO {

@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth";
 import { useConversations } from "../../hooks/useConversations";
 import { useMessages } from "../../hooks/useMessages";
 import { useStomp } from "../../hooks/useStomp";
-import { ConversationDTO, MessageDTO } from "../../lib/types";
-import { createConversation, sendMessage, ApiError } from "../../lib/api";
+import { ConversationDTO, MessageDTO, UserDTO } from "../../lib/types";
+import { createConversation, sendMessage, ApiError, searchUsers } from "../../lib/api";
 import { AppShell } from "../../components/layout/AppShell";
 import { ConversationItem } from "../../components/sidebar/ConversationItem";
 import { NewConversationModal } from "../../components/sidebar/NewConversationModal";
@@ -17,6 +17,7 @@ import { MessageInput } from "../../components/chat/MessageInput";
 import { Input } from "../../components/ui/Input";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../components/ui/Toast";
+import { Modal } from "../../components/ui/Modal";
 
 export default function MessagingApp() {
   const router = useRouter();
@@ -25,12 +26,33 @@ export default function MessagingApp() {
   const [selected, setSelected] = useState<ConversationDTO | null>(null);
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsDisplayName, setSettingsDisplayName] = useState(auth.username || "");
+  const [settingsEmail, setSettingsEmail] = useState("");
+  const [settingsPassword, setSettingsPassword] = useState("");
+  const [settingsAvatarName, setSettingsAvatarName] = useState("");
+  const [userResults, setUserResults] = useState<UserDTO[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const { items: conversations, loading: loadingConversations, nextCursor, loadMore, setItems } =
     useConversations(auth.token);
 
   const { items: messages, loading: loadingMessages, nextCursor: messageCursor, loadMore: loadMoreMessages, appendMessage, setItems: setMessageItems } =
     useMessages(auth.token, selected?.conversationId ?? null);
+
+  const updateConversationLastMessage = useCallback(
+    (conversationId: number, message: MessageDTO) => {
+      setItems((prev) =>
+        prev.map((conversation) =>
+          conversation.conversationId === conversationId
+            ? { ...conversation, lastMessage: message }
+            : conversation
+        )
+      );
+    },
+    [setItems]
+  );
 
   const { subscribe } = useStomp({
     token: auth.token,
@@ -65,6 +87,7 @@ export default function MessagingApp() {
         client.subscribe(`/topic/conversations/${selected.conversationId}`, (message) => {
           const msg = JSON.parse(message.body) as MessageDTO;
           appendMessage(msg);
+          updateConversationLastMessage(selected.conversationId, msg);
         });
       }
     },
@@ -76,11 +99,12 @@ export default function MessagingApp() {
     const sub = subscribe(`/topic/conversations/${selected.conversationId}`, (message) => {
       const msg = JSON.parse(message.body) as MessageDTO;
       appendMessage(msg);
+      updateConversationLastMessage(selected.conversationId, msg);
     });
     return () => {
       sub?.unsubscribe();
     };
-  }, [selected?.conversationId, subscribe, appendMessage, setMessageItems, selected]);
+  }, [selected?.conversationId, subscribe, appendMessage, setMessageItems, selected, updateConversationLastMessage]);
 
   useEffect(() => {
     if (!auth.token) {
@@ -97,6 +121,49 @@ export default function MessagingApp() {
     });
   }, [conversations, query]);
 
+  useEffect(() => {
+    if (!auth.token) return undefined;
+    let active = true;
+    const trimmed = query.trim();
+
+    const handle = setTimeout(async () => {
+      if (!active) return;
+      if (trimmed.length < 2) {
+        setUserResults([]);
+        setSearchOpen(false);
+        setSearchLoading(false);
+        return;
+      }
+
+      try {
+        setSearchLoading(true);
+        const results = await searchUsers(auth.token, trimmed);
+        if (!active) return;
+        setUserResults(results);
+        setSearchOpen(true);
+      } catch {
+        if (!active) return;
+        setUserResults([]);
+        setSearchOpen(false);
+      } finally {
+        if (!active) return;
+        setSearchLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [auth.token, query]);
+
+  const currentUsername = auth.username || "username";
+  const currentDisplayName = currentUsername;
+  const currentInitial = currentDisplayName.charAt(0).toUpperCase();
+  const selectedParticipant = selected?.participants.find((p) => p.userId !== auth.userId) ?? selected?.participants[0];
+  const selectedDisplayName = selected?.name || selectedParticipant?.displayName || selectedParticipant?.username || "Conversation";
+  const selectedInitial = selectedDisplayName.charAt(0).toUpperCase();
+
   if (!auth.token) {
     return null;
   }
@@ -105,7 +172,10 @@ export default function MessagingApp() {
     if (!auth.token) return;
     try {
       const conversation = await createConversation(auth.token, body);
-      setItems((prev) => [conversation, ...prev]);
+      setItems((prev) => {
+        if (prev.some((c) => c.conversationId === conversation.conversationId)) return prev;
+        return [conversation, ...prev];
+      });
       setSelected(conversation);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -121,6 +191,7 @@ export default function MessagingApp() {
     try {
       const msg = await sendMessage(auth.token, selected.conversationId, content);
       appendMessage(msg);
+      updateConversationLastMessage(selected.conversationId, msg);
     } catch (err) {
       if (err instanceof ApiError) {
         toast.push(err.payload?.message || err.message, "error");
@@ -132,25 +203,65 @@ export default function MessagingApp() {
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[rgba(229,217,182,0.1)] px-5 py-5">
-        <div className="font-display text-xl text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text">
-          BadrLink
+      <div className="border-b border-[rgba(229,217,182,0.1)] px-5 py-3">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/favicon.png"
+            width={60}
+            height={60}
+            alt="BadrLink favicon"
+            className="inline-block"
+          />
+          <div className="font-display text-4xl text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text">
+            BadrLink
+          </div>
         </div>
-        <p className="text-xs text-[rgba(164,190,123,0.7)]">{auth.username}</p>
       </div>
-      <div className="px-4 pt-4">
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search"
-          className="rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
-        />
+      <div className="px-4 pt-6">
+        <div className="relative">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => {
+              if (userResults.length > 0) setSearchOpen(true);
+            }}
+            placeholder="Search"
+            className="rounded-xl h-12 border text-lg border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
+          />
+          {searchOpen && (searchLoading || userResults.length > 0) && (
+            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-[rgba(164,190,123,0.2)] bg-[rgba(26,58,32,0.95)] shadow-xl">
+              {searchLoading ? (
+                <div className="px-3 py-2 text-xs text-[rgba(164,190,123,0.7)]">Searching...</div>
+              ) : (
+                userResults.map((user) => (
+                  <button
+                    key={user.userId}
+                    type="button"
+                    onClick={() => {
+                      setQuery(user.username);
+                      setSearchOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-[var(--color-parchment)] transition-colors hover:bg-[rgba(95,141,78,0.2)]"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-xs font-semibold">
+                      {user.displayName?.charAt(0)?.toUpperCase() || user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-sm">{user.displayName || user.username}</div>
+                      <div className="text-xs text-[rgba(164,190,123,0.7)]">@{user.username}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="px-4 pt-3">
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="w-full rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-sm font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(95,141,78,0.2)] active:scale-[0.98]"
+          className="w-full h-13 rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-lg font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(95,141,78,0.2)] active:scale-[0.98]"
         >
           + New Chat
         </button>
@@ -163,12 +274,13 @@ export default function MessagingApp() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="px-3 text-sm text-[rgba(164,190,123,0.6)]">No conversations yet.</div>
+          <div className="px-3 text-lg text-[rgba(164,190,123,0.6)]">No conversations yet.</div>
         ) : (
           filtered.map((conversation) => (
             <ConversationItem
               key={conversation.conversationId}
               conversation={conversation}
+              currentUserId={auth.userId}
               active={selected?.conversationId === conversation.conversationId}
               onClick={() => setSelected(conversation)}
             />
@@ -184,37 +296,59 @@ export default function MessagingApp() {
           Load more
         </button>
       )}
+      <div className="mt-auto border-t border-[rgba(229,217,182,0.1)] px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-lg font-semibold text-[var(--color-parchment)]">
+              {currentInitial}
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-[var(--color-parchment)]">{currentDisplayName}</div>
+              <div className="text-sm text-[rgba(164,190,123,0.7)]">{currentUsername}</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Settings"
+            onClick={() => setSettingsOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-md bg-transparent text-[var(--color-forest)] transition-transform duration-300 hover:rotate-90"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 text-[var(--color-forest)]">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 4.27 16.9l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09c.7 0 1.29-.4 1.51-1A1.65 1.65 0 0 0 4.27 6.1l-.06-.06A2 2 0 0 1 7.04 3.2l.06.06c.5.5 1.14.8 1.82.33.5-.35 1.11-.55 1.82-.55H12c.71 0 1.32.2 1.82.55.68.47 1.31.17 1.82-.33l.06-.06A2 2 0 0 1 19.73 7.1l-.06.06c-.22.6-.81 1-1.51 1H17a1.65 1.65 0 0 0-1.51 1c-.2.65-.2 1.36 0 2 .2.6.81 1 1.51 1h.09c.7 0 1.29.4 1.51 1z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 
   const mainContent = (
     <div className="flex h-full flex-col bg-gradient-to-br from-[rgba(229,217,182,0.95)] to-[rgba(212,200,158,0.9)]">
       <header className="flex items-center justify-between border-b border-[rgba(40,84,48,0.15)] bg-gradient-to-r from-[rgba(212,200,158,0.9)] to-[rgba(229,217,182,0.95)] px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)]" />
-          <div>
-            <div className="font-display text-base text-[var(--color-forest)]">
-              {selected
-                ? selected.name || selected.participants.map((p) => p.displayName || p.username).join(", ")
-                : "Select a conversation"}
+        {selected ? (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-sm font-semibold text-[var(--color-parchment)]">
+              {selectedInitial}
             </div>
-            {selected && (
+            <div>
+              <div className="font-display text-base text-[var(--color-forest)]">{selectedDisplayName}</div>
               <div className="text-xs text-[rgba(95,141,78,0.7)]">
                 {selected.type === "GROUP" ? "Group chat" : "Private chat"}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            auth.logout();
-            router.push("/login");
-          }}
-          className="rounded-xl border border-[rgba(40,84,48,0.2)] px-4 py-2 text-xs text-[rgba(40,84,48,0.7)] transition-all hover:bg-[rgba(40,84,48,0.08)]"
-        >
-          Logout
-        </button>
+        ) : (
+          <div />
+        )}
       </header>
 
       {selected ? (
@@ -229,15 +363,14 @@ export default function MessagingApp() {
           <MessageInput onSend={handleSend} />
         </>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-sm text-[rgba(40,84,48,0.4)]">
-          <Image
-            src="/app/texting_image.png"
-            alt="Select a conversation"
-            width={128}
-            height={128}
-            className="h-32 w-32 opacity-40"
-          />
-          <span className="font-display italic">Select a conversation to start chatting.</span>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-[rgba(40,84,48,0.7)]">
+          <div className="flex h-40 w-40 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] animate-pulse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-15 w-15 text-[var(--color-parchment)]">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
+            </svg>
+          </div>
+          <div className="text-2xl font-semibold text-[var(--color-forest)]">No chat selected</div>
+          <div className="text-xl text-[rgba(40,84,48,0.6)]">Choose one from the sidebar to start messaging</div>
         </div>
       )}
     </div>
@@ -266,23 +399,86 @@ export default function MessagingApp() {
       </div>
 
       <div className="hidden h-full lg:block">
-        <AppShell
-          sidebar={sidebarContent}
-          main={mainContent}
-          details={
-            <div className="flex h-full flex-col gap-4 p-4">
-              <div className="rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(26,58,32,0.9)] to-[rgba(40,84,48,0.8)] p-4">
-                <h3 className="text-sm font-semibold text-[var(--color-parchment)]">Details</h3>
-                <p className="mt-2 text-xs text-[rgba(164,190,123,0.7)]">
-                  Select a conversation to see participants and shared moments.
-                </p>
-              </div>
-            </div>
-          }
-        />
+        <AppShell sidebar={sidebarContent} main={mainContent} />
       </div>
 
       <NewConversationModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreate} />
+      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-xl font-semibold text-[var(--color-parchment)]">
+              {currentInitial}
+              <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[rgba(229,217,182,0.3)] bg-[rgba(40,84,48,0.9)]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setSettingsAvatarName(e.target.files?.[0]?.name || "")}
+                  className="hidden"
+                />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4 text-[var(--color-parchment)] rotate-[60deg]">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.1 2.1 0 0 1 2.97 2.97L8.25 19.04l-4.25 1.06 1.06-4.25L16.862 4.487Z" />
+                </svg>
+              </label>
+            </div>
+            <div className="text-sm text-[rgba(164,190,123,0.7)]">
+              {settingsAvatarName ? `Selected: ${settingsAvatarName}` : "Choose an avatar"}
+            </div>
+          </div>
+          <Input
+            label="Display name"
+            value={settingsDisplayName}
+            onChange={(e) => setSettingsDisplayName(e.target.value)}
+            placeholder="Your name"
+            className="bg-[rgba(26,58,32,0.6)]"
+          />
+          <Input
+            label="Email"
+            value={settingsEmail}
+            onChange={(e) => setSettingsEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="bg-[rgba(26,58,32,0.6)]"
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={settingsPassword}
+            onChange={(e) => setSettingsPassword(e.target.value)}
+            placeholder="••••••••"
+            className="bg-[rgba(26,58,32,0.6)]"
+          />
+          <div className="flex justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                auth.logout();
+                router.push("/login");
+              }}
+              className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.8)] transition-all hover:bg-[rgba(229,217,182,0.08)]"
+            >
+              Logout
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(false)}
+                className="text-sm text-[rgba(229,217,182,0.6)] hover:text-[var(--color-parchment)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  toast.push("Settings saved", "success");
+                  setSettingsOpen(false);
+                }}
+                className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-sm font-semibold text-[var(--color-parchment)] transition-all hover:scale-[1.02]"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
