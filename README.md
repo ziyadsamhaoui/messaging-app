@@ -46,9 +46,7 @@ messaging-app/
 │
 ├── .mvn/                      # Maven wrapper
 ├── compose.yaml               # Docker Compose configuration
-├── pom.xml                    # Maven configuration
-├── mvnw
-└── mvnw.cmd
+└── pom.xml                    # Maven configuration
 ```
 
 ---
@@ -60,8 +58,7 @@ messaging-app/
 | Backend | Spring Boot |
 | Frontend | React + TypeScript |
 | Build Tool | Maven |
-| Package Manager | npm |
-| Containerization | Docker & Docker Compose |
+| Containerization | Docker |
 
 ---
 
@@ -71,7 +68,6 @@ messaging-app/
 
 - Java 17+
 - Node.js 18+
-- npm
 - Docker & Docker Compose *(optional but recommended)*
 
 ### Clone the repository
