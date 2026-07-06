@@ -18,7 +18,8 @@ A scalable messaging platform featuring secure authentication, real-time communi
 
 ## ✨ Features
 
-- 💬 **Real-time messaging** — Instant message delivery with live updates- 🔐 **Authentication** — Secure user registration and login
+- 💬 **Real-time messaging** — Instant message delivery with live updates
+- 🔐 **Authentication** — Secure user registration and login
 - 👤 **User management** — Create accounts and manage user sessions
 - 🟢 **Presence status** — Online/offline user indicators
 - ⌨️ **Typing indicators** — See when another user is typing
