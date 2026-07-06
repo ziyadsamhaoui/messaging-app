@@ -29,7 +29,6 @@ public class MessageEntity {
     private boolean deleted;
 
     // Full-args constructor used by some parts of the codebase/tests
-    // (replaced by Lombok @AllArgsConstructor but kept convenience constructors below)
 
     public MessageEntity(Long conversationId, Long userId, String content) {
         this.conversationId = conversationId;
